@@ -1,0 +1,41 @@
+┌────────────────────────────────────────────────────────────────────────────────────────────────────┐
+    기본 문법
+└────────────────────────────────────────────────────────────────────────────────────────────────────┘
+    1. JPQL vs Querydsl
+        - Querydsl은 컴파일 시점 오류 검증함.
+        - Querydsl은 파라미터 바인딩을 자동으로 해줌.
+    ┌────────────────────────────────────────────────────────────────────────────────────────────────────┐
+
+        @Test
+        @DisplayName("JPA 시작")
+        void jpqlTest()
+        {
+            String qlString = "select m from Member m where m.username = :username";
+            Member findMember = em.createQuery(qlString, Member.class)
+                    .setParameter("username", "member1")
+                    .getSingleResult();
+
+            assertThat(findMember.getUsername()).isEqualTo("member1");
+        }
+
+        @Test
+        @DisplayName("Querydsl 시작")
+        void querydslTest()
+        {
+            // [01] JPAQueryFactory 생성
+            JPAQueryFactory queryFactory = new JPAQueryFactory(em);
+            // [02]
+            QMember m = new QMember("m");
+
+            // [03] querydsl 작성 : PrepareStatement 로 변환함
+            Member findMember = queryFactory
+                                .select(m)
+                                .from(m)
+                                .where(m.username.eq("member1"))
+                                .fetchOne();
+            // [04] 검증
+            assertThat(findMember.getUsername()).isEqualTo("member1");
+        }
+
+
+    └────────────────────────────────────────────────────────────────────────────────────────────────────┘
