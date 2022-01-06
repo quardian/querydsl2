@@ -2,75 +2,117 @@
     개발환경 설정
 └────────────────────────────────────────────────────────────────────────────────────────────────────┘
     1. Spring Web MVC 프로젝트 생성
+        - Web
+        - Lombook
+        - H2 Database
+        - Spring Data JPA
 
     2. build.gradle
     ┌────────────────────────────────────────────────────────────────────────────────────────────────────┐
-
-    plugins {
-        id 'org.springframework.boot' version '2.6.2'
-        id 'io.spring.dependency-management' version '1.0.11.RELEASE'
-        id 'java'
-    }
-
-    group = 'com.inho'
-    version = '0.0.1-SNAPSHOT'
-    sourceCompatibility = '11'
-    def querydslVersion = '5.0.0' //4.4.0
-
-    configurations {
-        compileOnly {
-            extendsFrom annotationProcessor
+        plugins {
+            id 'org.springframework.boot' version '2.6.2'
+            id 'io.spring.dependency-management' version '1.0.11.RELEASE'
+            id 'java'
         }
-    }
 
-    repositories {
-        mavenCentral()
-    }
+        group = 'com.inho'
+        version = '0.0.1-SNAPSHOT'
+        sourceCompatibility = '11'
+        def querydslVersion = '5.0.0' //4.4.0
 
-    dependencies {
-        implementation 'org.springframework.boot:spring-boot-starter-web'
-        implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
-        runtimeOnly 'com.h2database:h2'
+        configurations {
+            compileOnly {
+                extendsFrom annotationProcessor
+            }
+        }
 
-        // Querydsl START -------------------------------------------
-        implementation group: 'com.querydsl', name: 'querydsl-core', version: querydslVersion
-        implementation group: 'com.querydsl', name: 'querydsl-jpa', version: querydslVersion
-        implementation group: 'com.querydsl', name: 'querydsl-apt', version: querydslVersion
+        repositories {
+            mavenCentral()
+        }
 
-        // querydsl JPAAnnotationProcessor 사용 지정
-        annotationProcessor group: 'com.querydsl', name: 'querydsl-apt', version: querydslVersion
-        annotationProcessor group: 'com.querydsl', name: 'querydsl-apt', version: querydslVersion, classifier: 'jpa'
-        // java.lang.NoClassDefFoundError(javax.annotation.Entity) 발생 대응
-        annotationProcessor("jakarta.persistence:jakarta.persistence-api")
-        // java.lang.NoClassDefFoundError (javax.annotation.Generated) 발생 대응
-        annotationProcessor("jakarta.annotation:jakarta.annotation-api")
-        // Querydsl END -------------------------------------------
+        dependencies {
+            implementation 'org.springframework.boot:spring-boot-starter-web'
+            implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+            runtimeOnly 'com.h2database:h2'
 
-        implementation 'com.querydsl:querydsl-jpa'
-        implementation 'com.querydsl:querydsl-apt'
+            /*JPA 쿼리문 로그 출력*/
+            implementation("com.github.gavlyukovskiy:p6spy-spring-boot-starter:1.8.0")
 
-        compileOnly 'org.projectlombok:lombok'
-        annotationProcessor 'org.projectlombok:lombok'
+            // Querydsl START -------------------------------------------
+            implementation group: 'com.querydsl', name: 'querydsl-core', version: querydslVersion
+            implementation group: 'com.querydsl', name: 'querydsl-jpa', version: querydslVersion
+            implementation group: 'com.querydsl', name: 'querydsl-apt', version: querydslVersion
 
-        testCompileOnly 'org.projectlombok:lombok'
-        testAnnotationProcessor 'org.projectlombok:lombok'
-        testImplementation 'org.springframework.boot:spring-boot-starter-test'
-    }
+            // querydsl JPAAnnotationProcessor 사용 지정
+            annotationProcessor group: 'com.querydsl', name: 'querydsl-apt', version: querydslVersion
+            annotationProcessor group: 'com.querydsl', name: 'querydsl-apt', version: querydslVersion, classifier: 'jpa'
+            // java.lang.NoClassDefFoundError(javax.annotation.Entity) 발생 대응
+            annotationProcessor("jakarta.persistence:jakarta.persistence-api")
+            // java.lang.NoClassDefFoundError (javax.annotation.Generated) 발생 대응
+            annotationProcessor("jakarta.annotation:jakarta.annotation-api")
+            // Querydsl END -------------------------------------------
 
-    test {
-        useJUnitPlatform()
-    }
+            implementation 'com.querydsl:querydsl-jpa'
+            implementation 'com.querydsl:querydsl-apt'
 
-    clean {
-        delete file('src/main/generated') // 인텔리제이 Annotation processor 생성물 생성위치
-    }
+            compileOnly 'org.projectlombok:lombok'
+            annotationProcessor 'org.projectlombok:lombok'
 
-    /**
-     * 인텔리제이 Annotation processor 에 생성되는 'src/main/generated' 디렉터리 삭제
-     */
-    task cleanGeneatedDir(type: Delete) {
-        // 인텔리제이 annotation processor 가 생성한 Q클래스가 clean 태스크로 삭제되는 게 불편하다면 둘 중에 하나를 선택
-        delete file('src/main/generated')
-    }
+            testCompileOnly 'org.projectlombok:lombok'
+            testAnnotationProcessor 'org.projectlombok:lombok'
+            testImplementation 'org.springframework.boot:spring-boot-starter-test'
+        }
 
+        test {
+            useJUnitPlatform()
+        }
+
+        clean {
+            delete file('src/main/generated') // 인텔리제이 Annotation processor 생성물 생성위치
+        }
+
+        /**
+         * 인텔리제이 Annotation processor 에 생성되는 'src/main/generated' 디렉터리 삭제
+         */
+        task cleanGeneatedDir(type: Delete) {
+            // 인텔리제이 annotation processor 가 생성한 Q클래스가 clean 태스크로 삭제되는 게 불편하다면 둘 중에 하나를 선택
+            delete file('src/main/generated')
+        }
     └────────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+    3. [application.yml]
+    ┌────────────────────────────────────────────────────────────────────────────────────────────────────┐
+        spring:
+          datasource:
+            driver-class-name: org.h2.Driver
+            url: jdbc:h2:tcp://localhost/~/querydsl
+            username: sa
+            password:
+
+          jpa:
+            #show-sql: false
+            #generate-ddl: true
+            database: h2
+            database-platform: org.hibernate.dialect.H2Dialect
+            hibernate:
+              ddl-auto: create
+              #properties:
+              #show_sql: true
+              #format_sql: true
+          data:
+            web:
+              pageable:
+                default-page-size: 10
+                max-page-size: 100
+                one-indexed-parameters: true
+
+        decorator:
+          datasource:
+            p6spy:
+              multiline: true
+              enable-logging: true
+            #logging.level:
+            #org.hibernate.SQL: debug
+            #org.type.descriptor.sql.BasicBinder: TRACE
+    └────────────────────────────────────────────────────────────────────────────────────────────────────┘
+
