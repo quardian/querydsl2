@@ -256,7 +256,7 @@ public class QuerydslBasicTest {
 
 
     @Test
-    @DisplayName("JOIN")
+    @DisplayName("thetajoinQuerydsl")
     void thetajoinQuerydsl()
     {
 
@@ -268,4 +268,54 @@ public class QuerydslBasicTest {
     }
 
 
+
+
+    @Test
+    @DisplayName("조인 대상 필터링")
+    void joinOnFiltering()
+    {
+        /** 회원과 팀을 조인하면서,
+         * 팀 이름이 teamA인 팀만 조인, 회원은 모두 조인
+         * JPQL :
+         * select
+         *  m,t
+         * form         Member  m
+         * left join    m.team   t on t.name = 'teamA'
+         */
+        List<Tuple> members = query
+                .select(member, team)
+                .from(member)
+                .leftJoin(member.team, team).on(team.name.eq("teamA"))
+                .fetch();
+
+        for (Tuple tuple : members) {
+            System.out.println("tuple = " + tuple);
+        }
+
+        List<Tuple> members1 = query
+                .select(member, team)
+                .from(member)
+                .leftJoin(member.team, team)
+                .where(team.name.eq("teamA"))
+                .fetch();
+
+        for (Tuple tuple : members1) {
+            System.out.println("tuple = " + tuple);
+        }
+    }
+
+
+    @Test
+    @DisplayName("연관관계 없는 외부 조인")
+    void externalJoin()
+    {
+        List<Tuple> fetch = query
+                .select(member, team)
+                .from(member)
+                .leftJoin(team).on(member.id.eq(team.id))
+                .fetch();
+        for (Tuple tuple : fetch) {
+            System.out.println("tuple = " + tuple);
+        }
+    }
 }

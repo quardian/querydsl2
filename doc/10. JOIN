@@ -49,3 +49,8 @@
                       member0_.member_id=team1_.team_id
 
     └────────────────────────────────────────────────────────────────────────────────────────────────────┘
+        List<Tuple> fetch = query
+                .select(member, team)
+                .from(member)
+                .leftJoin(team).on(member.username.eq(team.name))
+                .fetch();

@@ -1,0 +1,80 @@
+┌────────────────────────────────────────────────────────────────────────────────────────────────────┐
+    JOIN - on 절
+└────────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+    1. ON 절을 활용한 조인 ( JPA 2.1 부터 지원 )
+        - 조인 대상 필터링
+        - 연관관계 없는 엔티티 외부 조인
+
+    2. 조인 대상 필터링
+    ┌────────────────────────────────────────────────────────────────────────────────────────────────────┐
+        /** 회원과 팀을 조인하면서,
+         * 팀 이름이 teamA인 팀만 조인, 회원은 모두 조인
+         * JPQL :
+         * select
+         *  m,t
+         * form         Member  m
+         * left join    m.team   t on t.name = 'teamA'
+         */
+        List<Tuple> members = query
+                .select(member, team)
+                .from(member)
+                .leftJoin(member.team, team).on(team.name.eq("teamA"))
+                .fetch();
+
+    select
+        member0_.member_id as member_i1_1_0_,
+        team1_.team_id as team_id1_2_1_,
+        member0_.age as age2_1_0_,
+        member0_.team_id as team_id4_1_0_,
+        member0_.username as username3_1_0_,
+        team1_.name as name2_2_1_
+    from            member  member0_
+    left outer join team    team1_ on member0_.team_id=team1_.team_id
+                                        and ( team1_.name='teamA' )
+
+
+    --
+        List<Tuple> members1 = query
+                .select(member, team)
+                .from(member)
+                .leftJoin(member.team, team)
+                .where(team.name.eq("teamA"))
+                .fetch();
+
+        select
+                member0_.member_id as member_i1_1_0_,
+                team1_.team_id as team_id1_2_1_,
+                member0_.age as age2_1_0_,
+                member0_.team_id as team_id4_1_0_,
+                member0_.username as username3_1_0_,
+                team1_.name as name2_2_1_
+            from
+                member member0_
+            left outer join
+                team team1_
+                    on member0_.team_id=team1_.team_id
+            where
+                team1_.name='teamA'
+    └────────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+    3. 연관관계 없는 엔티티 외부 조인
+    ┌────────────────────────────────────────────────────────────────────────────────────────────────────┐
+
+        List<Tuple> fetch = query
+                .select(member, team)
+                .from(member)
+                .leftJoin(team).on(member.username.eq(team.name))
+                .fetch();
+
+    select
+        member0_.member_id as member_i1_1_0_,
+        team1_.team_id as team_id1_2_1_,
+        member0_.age as age2_1_0_,
+        member0_.team_id as team_id4_1_0_,
+        member0_.username as username3_1_0_,
+        team1_.name as name2_2_1_
+    from            member member0_
+    left outer join team team1_
+                    on (member0_.username=team1_.name)
+    └────────────────────────────────────────────────────────────────────────────────────────────────────┘
