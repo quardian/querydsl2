@@ -1,6 +1,7 @@
 package com.inho.querydsl.basic;
 
 import com.inho.querydsl.entity.*;
+import com.querydsl.core.QueryResults;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -12,6 +13,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
+
+import java.util.List;
 
 import static com.inho.querydsl.entity.QMember.member;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -141,4 +144,41 @@ public class QuerydslBasicTest {
 
     }
 
+
+
+    @Test
+    @DisplayName("결과조회")
+    void resultViewquerydsl()
+    {
+        // List
+        List<Member> fetch = query
+                .selectFrom(member)
+                .fetch();
+
+        // 단 건
+        Member fetchOne = query
+                .selectFrom(QMember.member)
+                .fetchOne();
+
+        // 처음 한 건 조회
+        Member fetchFirst = query
+                .selectFrom(QMember.member)
+                .fetchFirst();
+
+        // 페이징 사용 ( deprecated )
+        QueryResults<Member> fetchResults = query
+                .selectFrom(member)
+                .fetchResults();
+
+        long total = fetchResults.getTotal();
+        List<Member> results = fetchResults.getResults();
+        long limit = fetchResults.getLimit();
+        long offset = fetchResults.getOffset();
+
+        // count ( deprecated )
+        long fetchCount = query
+                .selectFrom(member)
+                .fetchCount();
+
+    }
 }
