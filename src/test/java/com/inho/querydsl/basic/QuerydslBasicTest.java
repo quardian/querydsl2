@@ -6,12 +6,14 @@ import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 
+import static com.inho.querydsl.entity.QMember.member;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest
@@ -20,6 +22,9 @@ public class QuerydslBasicTest {
     @PersistenceContext
     private EntityManager em;
 
+    @Autowired
+    JPAQueryFactory query;
+
     @Test
     @DisplayName("Querydsl 설정 확인")
     void querydslSettings()
@@ -27,7 +32,7 @@ public class QuerydslBasicTest {
         Hello hello = new Hello();
         em.persist(hello);
 
-        JPAQueryFactory query = new JPAQueryFactory(em);
+        //JPAQueryFactory query = new JPAQueryFactory(em);
         QHello qhello = new QHello("h");
 
         Hello result = query.selectFrom(qhello)
@@ -74,19 +79,66 @@ public class QuerydslBasicTest {
     void querydslTest()
     {
         // [01] JPAQueryFactory 생성
-        JPAQueryFactory queryFactory = new JPAQueryFactory(em);
+        //JPAQueryFactory queryFactory = new JPAQueryFactory(em);
 
         // [02]
         QMember m = new QMember("m");
 
         // [03] querydsl 작성 : PrepareStatement 로 변환함
-        Member findMember = queryFactory
+        Member findMember = query
                             .select(m)
                             .from(m)
                             .where(m.username.eq("member1"))
                             .fetchOne();
         // [04] 검증
         assertThat(findMember.getUsername()).isEqualTo("member1");
+    }
+
+
+    @Test
+    @DisplayName("Q-Type")
+    void qTypeTest()
+    {
+        // [01] JPAQueryFactory 생성
+        //JPAQueryFactory queryFactory = new JPAQueryFactory(em);
+
+        // [03] querydsl 작성 : PrepareStatement 로 변환함
+        Member findMember = query
+                .select(member)
+                .from(member)
+                .where(member.username.eq("member1"))
+                .fetchOne();
+        // [04] 검증
+        assertThat(findMember.getUsername()).isEqualTo("member1");
+    }
+
+    @Test
+    @DisplayName("검색조건")
+    void querydslSearch()
+    {
+        Member findMember = query
+                        .selectFrom(member)
+                        .where(member.username.eq("member1")
+                                .and(member.age.eq(10)))
+                        .fetchOne();
+        assertThat(findMember.getUsername()).isEqualTo("member1");
+
+    }
+
+
+    @Test
+    @DisplayName("AndParam")
+    void querydslAndParam()
+    {
+        Member findMember = query
+                .selectFrom(member)
+                .where(
+                        member.username.eq("member1")
+                        , (member.age.eq(10))
+                )
+                .fetchOne();
+        assertThat(findMember.getUsername()).isEqualTo("member1");
+
     }
 
 }
