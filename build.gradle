@@ -2,6 +2,9 @@ plugins {
     id 'org.springframework.boot' version '2.6.2'
     id 'io.spring.dependency-management' version '1.0.11.RELEASE'
     id 'java'
+
+    /* queryDsl 플러그인 추가 */
+    id 'com.ewerk.gradle.plugins.querydsl' version '1.0.10'
 }
 
 group = 'com.inho'
@@ -33,12 +36,12 @@ dependencies {
     implementation group: 'com.querydsl', name: 'querydsl-apt', version: querydslVersion
 
     // querydsl JPAAnnotationProcessor 사용 지정
-    annotationProcessor group: 'com.querydsl', name: 'querydsl-apt', version: querydslVersion
     annotationProcessor group: 'com.querydsl', name: 'querydsl-apt', version: querydslVersion, classifier: 'jpa'
     // java.lang.NoClassDefFoundError(javax.annotation.Entity) 발생 대응
     annotationProcessor("jakarta.persistence:jakarta.persistence-api")
     // java.lang.NoClassDefFoundError (javax.annotation.Generated) 발생 대응
     annotationProcessor("jakarta.annotation:jakarta.annotation-api")
+
     // Querydsl END -------------------------------------------
 
     implementation 'com.querydsl:querydsl-jpa'
@@ -56,14 +59,31 @@ test {
     useJUnitPlatform()
 }
 
-clean {
-    delete file('src/main/generated') // 인텔리제이 Annotation processor 생성물 생성위치
+
+
+// querydsl 추가 시작
+
+def querydslSrcDir = "$buildDir/generated/querydsl"
+
+querydsl {
+    jpa = true
+    querydslSourcesDir = querydslSrcDir
 }
 
-/**
- * 인텔리제이 Annotation processor 에 생성되는 'src/main/generated' 디렉터리 삭제
- */
-task cleanGeneatedDir(type: Delete) {
-    // 인텔리제이 annotation processor 가 생성한 Q클래스가 clean 태스크로 삭제되는 게 불편하다면 둘 중에 하나를 선택
-    delete file('src/main/generated')
+sourceSets {
+    main.java.srcDir querydslSrcDir
+}
+
+compileQuerydsl{
+    options.annotationProcessorPath = configurations.querydsl
+}
+
+// build 상황에 테스트 패키지는 제외하게 추가
+test {
+    exclude 'com.soleo.ecommerce.**'
+    exclude 'test.**'
+}
+
+configurations {
+    querydsl.extendsFrom compileClasspath
 }
