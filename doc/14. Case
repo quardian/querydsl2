@@ -1,0 +1,60 @@
+┌────────────────────────────────────────────────────────────────────────────────────────────────────┐
+    Case 문
+└────────────────────────────────────────────────────────────────────────────────────────────────────┘
+    - select, 조건절(where)에서 사용 가능
+
+    1. 조건식
+    ┌────────────────────────────────────────────────────────────────────────────────────────────────────┐
+        System.out.println("===단순한 조건식 ==");
+        List<String> caseResult1 = queryFactory
+                .select(member.age
+                        .when(10).then("10살")
+                        .when(20).then("20살")
+                        .otherwise("기타"))
+                .from(member)
+                .fetch();
+        for (String s : caseResult1) {
+            System.out.println("s = " + s);
+        }
+
+        System.out.println("===단순한 조건식 [JPQL]==");
+        String qlString = "select " +
+                " case m.age" +
+                "   when 10 then '10살' " +
+                "   when 20 then '20살' " +
+                "   else '기타' " +
+                " end " +
+                "From Member m";
+        TypedQuery<String> query = em.createQuery(qlString, String.class);
+        List<String> resultList = query.getResultList();
+        for (String s : resultList) {
+            System.out.println("s = " + s);
+        }
+
+
+        System.out.println("===복잡한 조건식 ==");
+        List<String> caseResult2 = queryFactory
+                .select( new CaseBuilder()
+                                .when( member.age.between( 0, 20) ).then("0~20살")
+                                .when( member.age.between(21, 30) ).then("21~30살")
+                                .otherwise("기타") )
+                .from(member)
+                .fetch();
+        for (String s : caseResult2) {
+            System.out.println("s = " + s);
+        }
+
+        System.out.println("===복잡한 조건식 [JPQL]==");
+        qlString = "select " +
+                " case " +
+                "   when m.age between 0 and 20 then '0~20살' " +
+                "   when m.age between 21 and 30 then '21~30살' " +
+                "   else '기타' " +
+                " end " +
+                "From Member m";
+        query = em.createQuery(qlString, String.class);
+        resultList = query.getResultList();
+        for (String s : resultList) {
+            System.out.println("s = " + s);
+        }
+    └────────────────────────────────────────────────────────────────────────────────────────────────────┘

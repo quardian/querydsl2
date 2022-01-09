@@ -1,0 +1,27 @@
+┌────────────────────────────────────────────────────────────────────────────────────────────────────┐
+    상수, 문자 더하기
+└────────────────────────────────────────────────────────────────────────────────────────────────────┘
+    - 상수가 필요하면 Expressions.constant(xxx) 사용
+    - 문자가 아닌 다른 타입들을 stringValue()로 무자로 변환할 수 있다.
+      이 방법은 ENUM 처리시 자주 사용됨.
+    ┌────────────────────────────────────────────────────────────────────────────────────────────────────┐
+        Tuple result = queryFactory
+                .select(member.username,
+                        Expressions.constant("A")
+                )
+                .from(member)
+                .limit(1)
+                .fetchOne();
+        System.out.println("result = " + result);
+
+        String s = queryFactory
+                .select(
+                        member.username.concat("_")
+                                .concat(member.age.stringValue())
+                                .as("username_age")
+                )
+                .from(member)
+                .where(member.username.eq("member1"))
+                .fetchOne();
+        System.out.println("s = " + s);
+    └────────────────────────────────────────────────────────────────────────────────────────────────────┘

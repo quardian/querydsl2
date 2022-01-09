@@ -1,0 +1,92 @@
+┌────────────────────────────────────────────────────────────────────────────────────────────────────┐
+    서브쿼리
+└────────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+    com.querydsl.jpa.JPAExpressions 사용
+
+    1. 서브쿼리 eq 사용
+    ┌────────────────────────────────────────────────────────────────────────────────────────────────────┐
+        /** 나이가 가장 많은 회원 조회 */
+        QMember ms = new QMember("ms");
+
+        List<Member> fetch = query
+                .selectFrom(member)
+                .where(member.age.eq(
+                        JPAExpressions
+                                .select(ms.age.max())
+                                .from(ms)
+                )).fetch();
+
+
+        [SQL]
+                select
+                    member0_.member_id as member_i1_1_,
+                    member0_.age as age2_1_,
+                    member0_.team_id as team_id4_1_,
+                    member0_.username as username3_1_
+                from member member0_
+                where member0_.age=( select max(member1_.age) from member member1_ )
+
+
+        /** 나이가 평균 이상인 회원 조회 */
+        QMember ms = new QMember("ms");
+
+        List<Member> fetch = query
+                .selectFrom(member)
+                .where(member.age.goe(
+                        JPAExpressions
+                                .select(ms.age.avg())
+                                .from(ms)
+                )).fetch();
+
+        /** in 서버 쿼리 */
+        QMember ms = new QMember("ms");
+
+        List<Member> fetch = query
+                .selectFrom(member)
+                .where( member.id.in (
+                        JPAExpressions
+                                .select(ms.id)
+                                .from(ms)
+                                .where(ms.age.gt(10))
+                )).fetch();
+    [SQL]
+        select
+            member0_.member_id as member_i1_1_,
+            member0_.age as age2_1_,
+            member0_.team_id as team_id4_1_,
+            member0_.username as username3_1_
+        from
+            member member0_
+        where member0_.member_id in (
+                select member1_.member_id
+                from member member1_
+                where member1_.age>10
+            )
+
+    └────────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+    2. SELECT 서브 쿼리
+    ┌────────────────────────────────────────────────────────────────────────────────────────────────────┐
+        QMember ms = new QMember("ms");
+
+        List<Tuple> fetch = query
+                .select(member.username,
+                        JPAExpressions
+                                .select(ms.age.avg())
+                                .from(ms)
+                )
+                .from(member)
+                .fetch();
+
+        [SQL]
+            select
+                member0_.username as col_0_0_,
+                (select
+                    avg(cast(member1_.age as double))
+                    from
+                    member member1_
+                ) as col_1_0_
+            from
+                member member0_
+    └────────────────────────────────────────────────────────────────────────────────────────────────────┘
