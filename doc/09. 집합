@@ -67,12 +67,8 @@
                 on member0_.team_id=team1_.team_id
         group by
             team1_.name
-<<<<<<< HEAD
         having
             avg(cast(member0_.age as double))>10.0
-=======
-
->>>>>>> origin/master
         [결과]
         teamName=teamA, ageAvg = 15.0
         teamName=teamB, ageAvg = 35.0
