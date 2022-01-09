@@ -13,4 +13,27 @@
                 .select(member.username)
                 .from(member)
                 .fetch();
+
+        for (String username : fetch) {
+            System.out.println("username = " + username);
+        }
+    └────────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+
+    [프로젝션 대상 둘 이상일 떄]
+    - com.querydsl.core.Tuple
+    ┌────────────────────────────────────────────────────────────────────────────────────────────────────┐
+        List<Tuple> fetch = queryFactory
+                .select(
+                        member.username,
+                        member.age
+                )
+                .from(member)
+                .fetch();
+
+        for (Tuple tuple : fetch) {
+            String username = tuple.get(member.username);
+            Integer age     = tuple.get(member.age);
+            System.out.println("username = " + username + ", age = " + age);
+        }
     └────────────────────────────────────────────────────────────────────────────────────────────────────┘

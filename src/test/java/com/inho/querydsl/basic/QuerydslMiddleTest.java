@@ -69,16 +69,29 @@ public class QuerydslMiddleTest {
                 .select(member.username)
                 .from(member)
                 .fetch();
+
+        for (String username : fetch) {
+            System.out.println("username = " + username);
+        }
     }
 
     @Test
-    @DisplayName("프로젝션 대상 하나")
+    @DisplayName("프로젝션 대상 2개")
     void projectionTwoGTTest()
     {
-        List<String> fetch = queryFactory
-                .select(member.username)
+        List<Tuple> fetch = queryFactory
+                .select(
+                        member.username,
+                        member.age
+                )
                 .from(member)
                 .fetch();
+
+        for (Tuple tuple : fetch) {
+            String username = tuple.get(member.username);
+            Integer age = tuple.get(member.age);
+            System.out.println("username = " + username + ", age = " + age);
+        }
     }
 
 
