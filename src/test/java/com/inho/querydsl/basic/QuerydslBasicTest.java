@@ -208,4 +208,33 @@ public class QuerydslBasicTest {
             System.out.println("member = " + member);
         }
     }
+
+    @Test
+    @DisplayName("페이징1")
+    void paging1Querydsl()
+    {
+        List<Member> fetch = query
+                .selectFrom(member)
+                .orderBy(member.username.desc())
+                .offset(0)
+                .limit(2)
+                .fetch();
+
+    }
+
+    @Test
+    @DisplayName("페이징2")
+    void paging2Querydsl()
+    {
+        QueryResults<Member> results = query
+                .selectFrom(member)
+                .orderBy(member.username.desc())
+                .offset(0)
+                .limit(2)
+                .fetchResults();
+        long total = results.getTotal();
+        long limit = results.getLimit();
+        long offset = results.getOffset();
+        List<Member> members = results.getResults();
+    }
 }
