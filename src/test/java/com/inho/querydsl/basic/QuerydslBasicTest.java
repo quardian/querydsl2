@@ -12,8 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.transaction.annotation.Transactional;
 
-import javax.persistence.EntityManager;
-import javax.persistence.PersistenceContext;
+import javax.persistence.*;
 
 import java.util.List;
 
@@ -26,6 +25,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class QuerydslBasicTest {
     @PersistenceContext
     private EntityManager em;
+
+    @PersistenceUnit
+    private EntityManagerFactory emf;
+
 
     @Autowired
     JPAQueryFactory query;
@@ -317,5 +320,42 @@ public class QuerydslBasicTest {
         for (Tuple tuple : fetch) {
             System.out.println("tuple = " + tuple);
         }
+    }
+
+    @Test
+    @DisplayName("noFetchJoin")
+    void noFetchJoin()
+    {
+        em.flush();
+        em.clear();
+
+        Member member1 = query
+                .selectFrom(member)
+                .where(member.username.eq("member1"))
+                .fetchOne();
+
+        PersistenceUnitUtil persistenceUnitUtil = emf.getPersistenceUnitUtil();
+        boolean loaded = persistenceUnitUtil.isLoaded(member1.getTeam());
+
+        assertThat(loaded).as("페치 조인 미적용").isFalse();
+    }
+
+    @Test
+    @DisplayName("FetchJoin")
+    void fetchJoin()
+    {
+        em.flush();
+        em.clear();
+
+        Member member1 = query
+                .selectFrom(member)
+                .join(member.team, team).fetchJoin()
+                .where(member.username.eq("member1"))
+                .fetchOne();
+
+        PersistenceUnitUtil persistenceUnitUtil = emf.getPersistenceUnitUtil();
+        boolean loaded = persistenceUnitUtil.isLoaded(member1.getTeam());
+
+        assertThat(loaded).as("페치 조인 적용").isTrue();
     }
 }

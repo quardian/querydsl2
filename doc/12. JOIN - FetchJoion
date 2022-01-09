@@ -1,0 +1,50 @@
+┌────────────────────────────────────────────────────────────────────────────────────────────────────┐
+    JOIN - FetchJoin
+└────────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+    1. 페치조인
+        - 페치 조인은 SQL이 제공하는 기능은 아니다.
+        - SQL 조인을 활용해서 연관된 엔티티를 SQL 한번에 조회하는 기능이다. (성능 최적화 용도)
+    ┌────────────────────────────────────────────────────────────────────────────────────────────────────┐
+        // 패치 조인 적용전
+        Member member1 = query
+                .selectFrom(member)
+                .join(member.team, team)
+                .where(member.username.eq("member1"))
+                .fetchOne();
+                // SQL
+                select
+                    member0_.member_id as member_i1_1_,
+                    member0_.age as age2_1_,
+                    member0_.team_id as team_id4_1_,
+                    member0_.username as username3_1_
+                from
+                    member member0_
+                inner join
+                    team team1_
+                        on member0_.team_id=team1_.team_id
+                where
+                    member0_.username='member1'
+
+        // 패조인 적용 후
+        Member member1 = query
+                .selectFrom(member)
+                .join(member.team, team).fetchJoin()
+                .where(member.username.eq("member1"))
+                .fetchOne();
+        // SQL
+            select
+                member0_.member_id as member_i1_1_0_,
+                team1_.team_id as team_id1_2_1_,
+                member0_.age as age2_1_0_,
+                member0_.team_id as team_id4_1_0_,
+                member0_.username as username3_1_0_,
+                team1_.name as name2_2_1_
+            from
+                member member0_
+            inner join
+                team team1_
+                    on member0_.team_id=team1_.team_id
+            where
+                member0_.username='member1'
+    └────────────────────────────────────────────────────────────────────────────────────────────────────┘
