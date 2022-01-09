@@ -2,6 +2,7 @@ package com.inho.querydsl.basic;
 
 import com.inho.querydsl.entity.*;
 import com.querydsl.core.QueryResults;
+import com.querydsl.core.Tuple;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -17,6 +18,7 @@ import javax.persistence.PersistenceContext;
 import java.util.List;
 
 import static com.inho.querydsl.entity.QMember.member;
+import static com.inho.querydsl.entity.QTeam.team;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest
@@ -236,5 +238,68 @@ public class QuerydslBasicTest {
         long limit = results.getLimit();
         long offset = results.getOffset();
         List<Member> members = results.getResults();
+    }
+
+
+
+    @Test
+    @DisplayName("집합")
+    void aggregationQuerydsl()
+    {
+        /**
+         * JPQL
+         * select
+         *      COUNT(m),
+         *      SUM(m.age),
+         *      AVG(m.age),
+         *      MAX(m.age),
+         *      MIN(m.age)
+         * from Member m
+         */
+        List<Tuple> fetch = query
+                .select(
+                        member.count(),
+                        member.age.sum(),
+                        member.age.avg(),
+                        member.age.max(),
+                        member.age.min()
+                )
+                .from(member)
+                .fetch();
+
+        Tuple tuple = fetch.get(0);
+        Long memberCount = tuple.get(member.count());
+        Integer ageSum = tuple.get(member.age.sum());
+        Double ageAvg = tuple.get(member.age.avg());
+        Integer ageMax = tuple.get(member.age.max());
+        Integer ageMin = tuple.get(member.age.min());
+
+
+
+    }
+
+    @Test
+    @DisplayName("GroupBy")
+    void groupByQuerydsl()
+    {
+        /**
+         * 팀의 이름과 각 팀의 평균 연령을 구래하
+         */
+        List<Tuple> fetch = query
+                .select(
+                        team.name,
+                        member.age.avg()
+                ).from(member)
+                .join(member.team, team)
+                .groupBy(team.name)
+                .fetch();
+
+        for (Tuple tuple : fetch)
+        {
+            String teamName = tuple.get(team.name);
+            Double ageAvg = tuple.get(member.age.avg());
+            System.out.println( "teamName=" + teamName + ", ageAvg = " + ageAvg);
+        }
+
     }
 }
