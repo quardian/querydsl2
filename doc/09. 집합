@@ -1,0 +1,74 @@
+┌────────────────────────────────────────────────────────────────────────────────────────────────────┐
+    집합
+└────────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+    1. 집합함수
+    ┌────────────────────────────────────────────────────────────────────────────────────────────────────┐
+        /**
+         * JPQL
+         * select
+         *      COUNT(m),
+         *      SUM(m.age),
+         *      AVG(m.age),
+         *      MAX(m.age),
+         *      MIN(m.age)
+         * from Member m
+         */
+        List<Tuple> fetch = query
+                .select(
+                        member.count(),
+                        member.age.sum(),
+                        member.age.avg(),
+                        member.age.max(),
+                        member.age.min()
+                )
+                .from(member)
+                .fetch();
+
+        Tuple tuple = fetch.get(0);
+        Long memberCount = tuple.get(member.count());
+        Integer ageSum = tuple.get(member.age.sum());
+        Double ageAvg = tuple.get(member.age.avg());
+        Integer ageMax = tuple.get(member.age.max());
+        Integer ageMin = tuple.get(member.age.min());
+
+    └────────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+    2. GroupBy
+    ┌────────────────────────────────────────────────────────────────────────────────────────────────────┐
+        /**
+         * 팀의 이름과 각 팀의 평균 연령을 구래하
+         */
+        List<Tuple> fetch = query
+                .select(
+                        team.name,
+                        member.age.avg()
+                ).from(member)
+                .join(member.team, team)
+                .groupBy(team.name)
+                .having( member.age.avg().gt(10) )
+                .fetch();
+
+        for (Tuple tuple : fetch)
+        {
+            String teamName = tuple.get(team.name);
+            Double ageAvg = tuple.get(member.age.avg());
+            System.out.println( "teamName=" + teamName + ", ageAvg = " + ageAvg);
+        }
+    └────────────────────────────────────────────────────────────────────────────────────────────────────┘
+      [SQL]
+        select
+            team1_.name as col_0_0_,
+            avg(cast(member0_.age as double)) as col_1_0_
+        from
+            member member0_
+        inner join
+            team team1_
+                on member0_.team_id=team1_.team_id
+        group by
+            team1_.name
+        having
+            avg(cast(member0_.age as double))>10.0
+        [결과]
+        teamName=teamA, ageAvg = 15.0
+        teamName=teamB, ageAvg = 35.0
