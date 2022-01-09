@@ -58,11 +58,17 @@ public class QuerydslBasicTest {
         Member member2 = new Member("member2", 20, teamA);
         Member member3 = new Member("member3", 30, teamB);
         Member member4 = new Member("member4", 40, teamB);
+        Member member5 = new Member("null", 100);
+        Member member6 = new Member("member5", 100);
+        Member member7 = new Member("member6", 100);
 
         em.persist(member1);
         em.persist(member2);
         em.persist(member3);
         em.persist(member4);
+        em.persist(member5);
+        em.persist(member6);
+        em.persist(member7);
     }
 
     @Test
@@ -180,5 +186,26 @@ public class QuerydslBasicTest {
                 .selectFrom(member)
                 .fetchCount();
 
+    }
+
+
+    @Test
+    @DisplayName("정렬")
+    void sortQuerydsl()
+    {
+        /**
+         * 회원 정렬 순서
+         * 1. 회원 나이 내림차순(desc)
+         * 2. 회원 이름 올림차순(asc)
+         * 단 2 에서 회원 이름이 엇으면 마지막에 출력 ( nulls last )
+          */
+        List<Member> fetch = query
+                .selectFrom(member)
+                .where(member.age.eq(100))
+                .orderBy(member.age.desc(), member.username.asc().nullsLast())
+                .fetch();
+        for (Member member : fetch) {
+            System.out.println("member = " + member);
+        }
     }
 }
