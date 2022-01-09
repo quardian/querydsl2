@@ -1,0 +1,51 @@
+┌────────────────────────────────────────────────────────────────────────────────────────────────────┐
+    JOIN
+└────────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+    1. JOIN
+    ┌────────────────────────────────────────────────────────────────────────────────────────────────────┐
+        List<Member> members = query
+                .select(member)
+                .from(member)
+                .join(member.team, team)
+                .where(team.name.eq("teamA"))
+                .fetch();
+
+          select
+                member0_.member_id as member_i1_1_,
+                member0_.age as age2_1_,
+                member0_.team_id as team_id4_1_,
+                member0_.username as username3_1_
+            from
+                member member0_
+            inner join
+                team team1_
+                    on member0_.team_id=team1_.team_id
+            where
+                team1_.name='teamA'
+
+    └────────────────────────────────────────────────────────────────────────────────────────────────────┘
+    2. THETA JOIN
+    ┌────────────────────────────────────────────────────────────────────────────────────────────────────┐
+        List<Member> members = query
+                .select(member)
+                .from(member, team)
+                .where(member.id.eq(team.id))
+                .fetch();
+
+        - cross join 후에 where 조건으로 필터한다.
+        - inner join 으로만 되며, outer join은 on 절로 ..
+
+              select
+                      member0_.member_id as member_i1_1_,
+                      member0_.age as age2_1_,
+                      member0_.team_id as team_id4_1_,
+                      member0_.username as username3_1_
+                  from
+                      member member0_ cross
+                  join
+                      team team1_
+                  where
+                      member0_.member_id=team1_.team_id
+
+    └────────────────────────────────────────────────────────────────────────────────────────────────────┘

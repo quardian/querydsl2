@@ -239,4 +239,33 @@ public class QuerydslBasicTest {
         long offset = results.getOffset();
         List<Member> members = results.getResults();
     }
+
+
+    @Test
+    @DisplayName("JOIN")
+    void joinQuerydsl()
+    {
+
+        List<Member> members = query
+                .select(member)
+                .from(member)
+                .leftJoin(member.team, team)
+                .where(team.name.eq("teamA"))
+                .fetch();
+    }
+
+
+    @Test
+    @DisplayName("JOIN")
+    void thetajoinQuerydsl()
+    {
+
+        List<Member> members = query
+                .select(member)
+                .from(member, team)
+                .where(team.name.eq("teamA"))
+                .fetch();
+    }
+
+
 }
