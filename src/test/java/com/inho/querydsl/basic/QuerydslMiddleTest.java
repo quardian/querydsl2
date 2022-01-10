@@ -11,6 +11,7 @@ import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
+import com.querydsl.jpa.impl.JPAUtil;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -20,6 +21,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.*;
+import java.util.Arrays;
 import java.util.List;
 
 import static com.inho.querydsl.entity.QMember.member;
@@ -317,5 +319,59 @@ public class QuerydslMiddleTest {
     private BooleanExpression allEq(String usernameCond, Integer ageCond){
         return usernameEq(usernameCond).and(ageEq(ageCond));
     }
+
+
+    @Test
+    @DisplayName("쿼리 한번으로 대량 데이터 수정")
+    void updateBulkTest()
+    {
+        long affected = queryFactory
+                .update(member)
+                    .set(member.username, "비회원")
+                    .set(member.age, member.age.add(1))
+                .where(member.age.gt(10))
+                .execute();
+
+        // 벌크 연산 후, 영속성 컨텍스트 초기화 필요
+        em.flush();
+        em.clear();
+    }
+
+    @Test
+    @DisplayName("쿼리 한번으로 대량 데이터 수정2")
+    void updateBulk2Test()
+    {
+        long affected = queryFactory
+                .update(member)
+                .set(
+                        Arrays.asList(
+                                member.username,
+                                member.age
+                        ),
+                        Arrays.asList(
+                                "비회원",
+                                50
+                        )
+                )
+                .where(member.age.gt(10))
+                .execute();
+
+    }
+
+    @Test
+    @DisplayName("쿼리 한번으로 대량 데이터 삭제")
+    void deleteBulkTest()
+    {
+        long affected = queryFactory
+                .delete(member)
+                .where(member.age.gt(10))
+                .execute();
+
+        System.out.println("affected = " + affected);
+        // 벌크 연산 후, 영속성 컨텍스트 초기화 필요
+        em.flush();
+        em.clear();
+    }
+    
 
 }
