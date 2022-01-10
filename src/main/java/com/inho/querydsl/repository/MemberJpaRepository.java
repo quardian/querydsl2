@@ -95,8 +95,8 @@ public class MemberJpaRepository
                         )
                 )
                 .from(member)
-                .leftJoin(member.team, team)
-                .where()
+                .join(member.team, team)
+                .where(whereBuilder)
                 .fetch();
 
         List<MemberTeamDto> members1 = queryFactory
@@ -110,7 +110,7 @@ public class MemberJpaRepository
                         )
                 )
                 .from(member)
-                .leftJoin(member.team, team)
+                .join(member.team, team)
                 .where( whereBuilder )
                 .fetch();
 

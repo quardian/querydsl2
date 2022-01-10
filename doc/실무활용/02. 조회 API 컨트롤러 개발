@@ -1,0 +1,78 @@
+┌────────────────────────────────────────────────────────────────────────────────────────────────────┐
+    실무활용 - 조회 API 컨트롤러 개발
+└────────────────────────────────────────────────────────────────────────────────────────────────────┘
+    1. 프로파일 분리
+        - 샘플 데이터 추가가 테스트 케이스 실행에 영향을 주지 않도록 다음과 같이 프로파일을 설정.
+
+    [src/main/resources/application.yml]
+    ┌────────────────────────────────────────────────────────────────────────────────────────────────────┐
+        spring:
+            profiles:
+                active: local
+    └────────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+    [src/test/resources/application.yml]
+    ┌────────────────────────────────────────────────────────────────────────────────────────────────────┐
+        spring:
+            profiles:
+                active: test
+    └────────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+    2. local 프로파일 환경만 데이터 추가
+    ┌────────────────────────────────────────────────────────────────────────────────────────────────────┐
+        @Profile("local")
+        @Component
+        @RequiredArgsConstructor
+        public class InitMember {
+
+            private final InitMemberService initMemberService;
+
+            @PostConstruct
+            public void init()
+            {
+                /** PostContruct 와 Transactional은 분리를 해줘야 해서 따러 정의해야함. */
+                initMemberService.init();
+            }
+
+            @Component
+            static class InitMemberService {
+                @PersistenceContext
+                EntityManager em;
+
+                @Transactional
+                public void init(){
+                    Team teamA = new Team("teamA");
+                    Team teamB = new Team("teamB");
+                    em.persist(teamA);
+                    em.persist(teamB);
+
+                    for(int i=0; i<100; i++){
+                        Team team = (i % 2) == 0 ? teamA : teamB;
+                        em.persist( new Member("member"+i, i+1, team) ) ;
+                    }
+
+                }
+            }
+        }
+
+    └────────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+    3. local 프로파일 환경만 데이터 추가
+    ┌────────────────────────────────────────────────────────────────────────────────────────────────────┐
+        @RestController
+        @RequiredArgsConstructor
+        @Slf4j
+        public class MemberController {
+
+            private final MemberJpaRepository memberJpaRepository;
+
+            @GetMapping("/v1/members")
+            public List<MemberTeamDto> searchMemberV1(MemberSearchCondition condition,
+                                                      HttpServletRequest request)
+            {
+                log.info("requestURI={}, condition={}",request.getRequestURI(), condition);
+                return memberJpaRepository.searchByBuilder(condition);
+            }
+
+        }
+    └────────────────────────────────────────────────────────────────────────────────────────────────────┘
