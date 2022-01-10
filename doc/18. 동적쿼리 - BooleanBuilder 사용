@@ -40,3 +40,42 @@
             return result;
         }
     └────────────────────────────────────────────────────────────────────────────────────────────────────┘
+    ┌────────────────────────────────────────────────────────────────────────────────────────────────────┐
+
+        @Test
+        @DisplayName("동적쿼리-BooleanBuilder 사용")
+        void dynamicBooleanBuilder2Test()
+        {
+            // 동적쿼리 파라미터(가정)
+            String usernameParam = "member1";
+            Integer ageParam = 10;
+
+            List<Member> result = searchMember3(usernameParam, ageParam);
+            Assertions.assertThat(result.size()).isEqualTo(1);
+
+        }
+
+        private List<Member> searchMember3(String usernameCond, Integer ageCond)
+        {
+            List<Member> result = queryFactory
+                    .select(member)
+                    .from(member)
+                    .where( usernameEqB(usernameCond)
+                            .and(ageEqB(ageCond)) )
+                    .fetch();
+
+            return result;
+        }
+
+        private BooleanBuilder usernameEqB(String usernameCond) {
+            BooleanBuilder builder = new BooleanBuilder();
+            if ( usernameCond != null ) builder.and(member.username.eq(usernameCond));
+            return builder;
+        }
+
+        private BooleanBuilder ageEqB(Integer ageCond) {
+            BooleanBuilder builder = new BooleanBuilder();
+            if ( ageCond != null ) builder.and(member.age.eq(ageCond));
+            return builder;
+        }
+    └────────────────────────────────────────────────────────────────────────────────────────────────────┘
