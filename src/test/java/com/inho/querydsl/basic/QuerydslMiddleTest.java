@@ -3,11 +3,13 @@ package com.inho.querydsl.basic;
 import com.inho.querydsl.entity.*;
 import com.inho.querydsl.web.dto.MemberDto;
 import com.inho.querydsl.web.dto.QMemberDto;
+import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.Tuple;
 import com.querydsl.core.types.ExpressionUtils;
 import com.querydsl.core.types.Projections;
 import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -199,6 +201,34 @@ public class QuerydslMiddleTest {
         }
     }
 
+
+    @Test
+    @DisplayName("동적쿼리-BooleanBuilder 사용")
+    void dynamicBooleanBuilderTest()
+    {
+        // 동적쿼리 파라미터(가정)
+        String usernameParam = "member1";
+        Integer ageParam = 10;
+
+        List<Member> result = searchMember1(usernameParam, ageParam);
+        Assertions.assertThat(result.size()).isEqualTo(1);
+
+    }
+
+    private List<Member> searchMember1(String usernameCond, Integer ageCond)
+    {
+        BooleanBuilder builder = new BooleanBuilder(member.username.eq(usernameCond));
+        if ( ageCond != null ){
+            builder.and( member.age.eq(ageCond) );
+        }
+        List<Member> result = queryFactory
+                .select(member)
+                .from(member)
+                .where(builder)
+                .fetch();
+
+        return result;
+    }
 
 
 }
