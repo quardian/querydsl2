@@ -1,13 +1,12 @@
 package com.inho.querydsl.basic;
 
 import com.inho.querydsl.entity.*;
-import com.querydsl.core.QueryResults;
+import com.inho.querydsl.web.dto.MemberDto;
 import com.querydsl.core.Tuple;
-import com.querydsl.core.types.dsl.CaseBuilder;
-import com.querydsl.core.types.dsl.Expressions;
+import com.querydsl.core.types.ExpressionUtils;
+import com.querydsl.core.types.Projections;
 import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
-import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -19,7 +18,6 @@ import javax.persistence.*;
 import java.util.List;
 
 import static com.inho.querydsl.entity.QMember.member;
-import static com.inho.querydsl.entity.QTeam.team;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest
@@ -92,6 +90,95 @@ public class QuerydslMiddleTest {
             Integer age = tuple.get(member.age);
             System.out.println("username = " + username + ", age = " + age);
         }
+    }
+
+    @Test
+    @DisplayName("순수 JPA에서 DTO 조회")
+    void projectionJpaDtoTest()
+    {
+        String qlString = "select " +
+                " new com.inho.querydsl.web.dto.MemberDto( " +
+                "   m.username, " +
+                "   m.age " +
+                ") from Member m";
+
+        List<MemberDto> resultList = em.createQuery(qlString, MemberDto.class)
+                .getResultList();
+
+        for (MemberDto memberDto : resultList) {
+            System.out.println("memberDto = " + memberDto);
+        }
+    }
+
+
+    @Test
+    @DisplayName("Querydsl에서 DTO 조회")
+    void projectQuerydslDtoTest()
+    {
+        // 프로퍼티 접근 - Setter
+        List<MemberDto> fetch = queryFactory
+                .select(
+                        Projections.bean(MemberDto.class,
+                                member.username,
+                                member.age)
+                )
+                .from(member)
+                .fetch();
+
+        for (MemberDto member : fetch) {
+            System.out.println("username = " + member.getUsername() + ", age = " + member.getUsername());
+        }
+
+
+        // 필드 직접 접근
+        fetch = queryFactory
+                .select(
+                        Projections.fields(MemberDto.class,
+                                member.username,
+                                member.age)
+                )
+                .from(member)
+                .fetch();
+
+        for (MemberDto member : fetch) {
+            System.out.println("username = " + member.getUsername() + ", age = " + member.getUsername());
+        }
+
+
+        // 생성자 접근
+        fetch = queryFactory
+                .select(
+                        Projections.constructor(MemberDto.class,
+                                member.username,
+                                member.age)
+                )
+                .from(member)
+                .fetch();
+
+        for (MemberDto member : fetch) {
+            System.out.println("username = " + member.getUsername() + ", age = " + member.getUsername());
+        }
+
+        QMember memberSub = new QMember("memberSub");
+        List<MemberDto> fetch1 = queryFactory
+                .select(
+                        Projections.fields(MemberDto.class,
+                                member.username.as("username"),
+
+                                ExpressionUtils.as( JPAExpressions
+                                                .select(memberSub.age.max())
+                                                .from(memberSub)
+                                                .from(member)
+                                        , "age")
+                        )
+                )
+                .from(member)
+                .fetch();
+        for (MemberDto memberDto : fetch1) {
+            System.out.println("memberDto = " + memberDto);
+        }
+
+
     }
 
 
