@@ -6,10 +6,16 @@ import com.inho.querydsl.web.dto.MemberSearchCondition;
 import com.inho.querydsl.web.dto.MemberTeamDto;
 import com.inho.querydsl.web.dto.QMemberTeamDto;
 import com.querydsl.core.BooleanBuilder;
+import com.querydsl.core.QueryResults;
 import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.BooleanExpression;
+import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.support.PageableExecutionUtils;
 import org.springframework.util.StringUtils;
 
 import javax.persistence.EntityManager;
@@ -100,7 +106,12 @@ public class MemberRepositoryImpl implements MemberRepositoryCustom {
                 )
                 .from(member)
                 .leftJoin(member.team, team)
-                .where()
+                .where(
+                        usernameEqB( dto.getUsername() ),
+                        teamNameEqB( dto.getTeamName() ),
+                        ageGoeB( dto.getAgeGoe() ),
+                        ageLoeB( dto.getAgeLoe() )
+                )
                 .fetch();
 
         List<MemberTeamDto> members1 = queryFactory
@@ -126,8 +137,70 @@ public class MemberRepositoryImpl implements MemberRepositoryCustom {
         return members;
     }
 
+    @Override
+    public Page<MemberTeamDto> searchPageSimple(MemberSearchCondition dto, Pageable pageable) {
+        BooleanBuilder whereBuilder = whereBuilder(dto);
 
+        QueryResults<MemberTeamDto> results = queryFactory
+                .select(
+                        new QMemberTeamDto(
+                                member.id.as("memberId"),
+                                member.username,
+                                member.age,
+                                team.id.as("teamId"),
+                                team.name.as("teamName")
+                        )
+                )
+                .from(member)
+                .join(member.team, team)
+                .where(whereBuilder)
+                .offset(pageable.getOffset())
+                .limit(pageable.getPageSize())
+                .fetchResults();
 
+        List<MemberTeamDto> members = results.getResults();
+        long total = results.getTotal();
+
+        return new PageImpl<>(members, pageable, total);
+    }
+
+    @Override
+    public Page<MemberTeamDto> searchPageComplex(MemberSearchCondition dto, Pageable pageable) {
+        BooleanBuilder whereBuilder = whereBuilder(dto);
+
+        List<MemberTeamDto> results = queryFactory
+                .select(
+                        new QMemberTeamDto(
+                                member.id.as("memberId"),
+                                member.username,
+                                member.age,
+                                team.id.as("teamId"),
+                                team.name.as("teamName")
+                        )
+                )
+                .from(member)
+                .join(member.team, team)
+                .where(whereBuilder)
+                .offset(pageable.getOffset())
+                .limit(pageable.getPageSize())
+                .fetch();
+        /*
+        Long total = queryFactory
+                .select(member.count())
+                .from(member)
+                .join(member.team, team)
+                .where(whereBuilder)
+                .fetchOne();
+        */
+        JPAQuery<Long> countQuery = queryFactory
+                .select(member.count())
+                .from(member)
+                .join(member.team, team)
+                .where(whereBuilder);
+        //return PageableExecutionUtils.getPage(results, pageable, ()-> countQuery.fetchOne() );
+        return PageableExecutionUtils.getPage(results, pageable, countQuery::fetchOne );
+        //return new PageImpl<>(results, pageable, total);
+    }
 
     private BooleanBuilder whereBuilder(MemberSearchCondition dto)
     {
