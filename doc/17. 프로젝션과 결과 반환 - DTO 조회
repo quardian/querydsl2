@@ -26,11 +26,13 @@
 
     └────────────────────────────────────────────────────────────────────────────────────────────────────┘
 
-    [순수 JPA에서 DTO 조회 코드]
+    [Querydsl DTO 조회 코드]
         - 결과를 DTO 반환할 때 사용 3 가지 방법 지원
             . 프로퍼티 접근- Setter
             . 필드 접근
             . 생성자 사용
+            . @QueryProjection
+
 
     [프로퍼티 접근 - Setter]
         - DTO 기본 생성자 필요
@@ -102,5 +104,45 @@
                 .fetch();
         for (MemberDto memberDto : fetch1) {
             System.out.println("memberDto = " + memberDto);
+        }
+    └────────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+
+    [ 프로젝션 결과 반환 - @QeuryProjection ]
+    - 생성자 + @QueryProjection
+    - 컴파일 시점에 오류도 잡아주기 때문에 장점이 있지만
+      . DTO가 Qurydsl에 의존성을 갖는 단점이 있다.
+        (DTO는 Service, Controller 에서 여러 곳에서 쓰임)
+    ┌────────────────────────────────────────────────────────────────────────────────────────────────────┐
+        @Data
+        public class MemberDto {
+            private String username;
+            private int age;
+
+            public MemberDto() {
+            }
+
+            @QueryProjection    // <== QMemberDto 객체 생성됨 ( by Querydsl )
+            public MemberDto(String username, int age) {
+                this.username = username;
+                this.age = age;
+            }
+        }
+
+        @Test
+        @DisplayName("@QueryProjection")
+        void queryProjectionTest()
+        {
+            List<MemberDto> fetch = queryFactory
+                    .select(new QMemberDto(
+                            member.username,
+                            member.age
+                    ))
+                    .from(member)
+                    .fetch();
+
+            for (MemberDto memberDto : fetch) {
+                System.out.println("memberDto = " + memberDto);
+            }
         }
     └────────────────────────────────────────────────────────────────────────────────────────────────────┘

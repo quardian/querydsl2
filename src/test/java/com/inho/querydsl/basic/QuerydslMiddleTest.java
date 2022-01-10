@@ -2,6 +2,7 @@ package com.inho.querydsl.basic;
 
 import com.inho.querydsl.entity.*;
 import com.inho.querydsl.web.dto.MemberDto;
+import com.inho.querydsl.web.dto.QMemberDto;
 import com.querydsl.core.Tuple;
 import com.querydsl.core.types.ExpressionUtils;
 import com.querydsl.core.types.Projections;
@@ -180,6 +181,24 @@ public class QuerydslMiddleTest {
 
 
     }
+
+    @Test
+    @DisplayName("@QueryProjection")
+    void queryProjectionTest()
+    {
+        List<MemberDto> fetch = queryFactory
+                .select(new QMemberDto(
+                        member.username,
+                        member.age
+                ))
+                .from(member)
+                .fetch();
+
+        for (MemberDto memberDto : fetch) {
+            System.out.println("memberDto = " + memberDto);
+        }
+    }
+
 
 
 }
