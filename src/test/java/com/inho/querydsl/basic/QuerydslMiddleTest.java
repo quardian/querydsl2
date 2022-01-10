@@ -9,6 +9,7 @@ import com.querydsl.core.types.ExpressionUtils;
 import com.querydsl.core.types.Predicate;
 import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.BooleanExpression;
+import com.querydsl.core.types.dsl.Expressions;
 import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.querydsl.jpa.impl.JPAUtil;
@@ -372,6 +373,41 @@ public class QuerydslMiddleTest {
         em.flush();
         em.clear();
     }
-    
 
+    @Test
+    @DisplayName("SQL function 호출하기")
+    void sqlFunctionTest()
+    {
+        List<String> fetch = queryFactory
+                .select(
+                        Expressions.stringTemplate("function('replace',{0}, {1}, {2})"
+                                , member.username
+                                , "member"
+                                , "M")
+                )
+                .from(member)
+                .fetch();
+
+        for (String s : fetch) {
+            System.out.println("s = " + s);
+        }
+    }
+
+
+    @Test
+    @DisplayName("SQL function 호출하기")
+    void sqlFunction2Test()
+    {
+        List<String> fetch = queryFactory
+                .select(
+                        member.username
+                )
+                .from(member)
+                .where(member.username.eq(member.username.lower()))
+                .fetch();
+
+        for (String s : fetch) {
+            System.out.println("s = " + s);
+        }
+    }
 }
