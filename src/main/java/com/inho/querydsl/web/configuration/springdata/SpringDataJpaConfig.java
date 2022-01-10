@@ -16,7 +16,7 @@ import java.util.UUID;
 @Configuration
 @EnableJpaAuditing(modifyOnCreate = true)
 // Springboot 에서는 아래 설정 안해도, Application 하위에서 알아서 찾아줌.
-@EnableJpaRepositories(basePackages = {"com.inho.querydsl.web.repository"})
+@EnableJpaRepositories(basePackages = {"com.inho.querydsl.repository"})
 public class SpringDataJpaConfig {
 
     @PersistenceContext

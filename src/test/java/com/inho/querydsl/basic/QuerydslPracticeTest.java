@@ -75,19 +75,6 @@ public class QuerydslPracticeTest {
         em.persist(member7);
     }
 
-    @Test
-    @DisplayName("실무활용 - 순수 JPA와 Querydsl")
-    void pureJapAndQuerydslTest()
-    {
-        MemberSearchCondition dto = new MemberSearchCondition();
-        dto.setUsername("member1");
-        dto.setAgeGoe(10);
-        dto.setAgeLoe(30);
 
-        List<MemberTeamDto> memberTeamDtos = memberJpaRepository.searchByBuilder(dto);
-        for (MemberTeamDto memberTeamDto : memberTeamDtos) {
-            System.out.println("memberTeamDto = " + memberTeamDto);
-        }
-    }
 
 }

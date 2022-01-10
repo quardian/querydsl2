@@ -3,6 +3,7 @@ package com.inho.querydsl.entity;
 import lombok.*;
 
 import javax.persistence.*;
+import java.util.Objects;
 
 @Getter @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @ToString(exclude = {"team"})
@@ -47,5 +48,18 @@ public class Member {
 
     public Member(String username) {
         this(username,0,null);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Member member = (Member) o;
+        return getAge() == member.getAge() && Objects.equals(getId(), member.getId()) && Objects.equals(getUsername(), member.getUsername()) && Objects.equals(getTeam(), member.getTeam());
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(getId(), getUsername(), getAge(), getTeam());
     }
 }
