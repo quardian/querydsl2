@@ -1,0 +1,70 @@
+┌────────────────────────────────────────────────────────────────────────────────────────────────────┐
+    실무활용 - 순수 JPA와 Querydsl
+└────────────────────────────────────────────────────────────────────────────────────────────────────┘
+    1. 목차
+        - 순수 JPA 리포지토리와 Querydsl
+        - 동적쿼리 Builder 적용
+        - 동적쿼리 Where 적용
+        - 조회 API 컨트롤러 개발
+
+    2. 순수 JPA 리포지토리와 Querydsl
+
+    [순수 JPA 리포지토리 & querydsl]
+    ┌────────────────────────────────────────────────────────────────────────────────────────────────────┐
+
+        @Repository
+        @RequiredArgsConstructor
+        public class MemberJpaRepository
+        {
+            private final EntityManager em;
+            private final JPAQueryFactory queryFactory;
+
+            public void save(Member member){
+                em.persist(member);
+            }
+
+            public Optional<Member> findById(Long id){
+                Member member = em.find(Member.class, id);
+                return Optional.ofNullable(member);
+            }
+
+            public Optional<Member> findById_Querydsl(Long id){
+                Member member = queryFactory
+                        .selectFrom(QMember.member)
+                        .where(QMember.member.id.eq(id))
+                        .fetchOne();
+                return Optional.ofNullable(member);
+            }
+
+
+            public List<Member> findAll()
+            {
+                String qlString = "select m from Member m";
+                return em.createQuery(qlString, Member.class)
+                        .getResultList();
+            }
+
+            public List<Member> findAll_Querydsl()
+            {
+                return queryFactory
+                        .selectFrom(member)
+                        .fetch();
+            }
+
+            public List<Member> findByUsername(String username)
+            {
+                String qlString = "select m from Member m where m.username = :username";
+                return em.createQuery(qlString, Member.class)
+                        .setParameter("username", username)
+                        .getResultList();
+            }
+
+            public List<Member> findByUsername_Querydsl(String username)
+            {
+                return queryFactory
+                        .selectFrom(member)
+                        .where(member.username.eq(username))
+                        .fetch();
+            }
+        }
+    └────────────────────────────────────────────────────────────────────────────────────────────────────┘
