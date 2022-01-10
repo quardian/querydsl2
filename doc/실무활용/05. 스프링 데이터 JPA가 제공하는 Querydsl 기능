@@ -1,0 +1,45 @@
+┌────────────────────────────────────────────────────────────────────────────────────────────────────┐
+    스프링 데이터 JPA가 제공하는 Querydsl 기능
+└────────────────────────────────────────────────────────────────────────────────────────────────────┘
+    - 여기서 소개하는 기능은 제약이 커서 복잡한 실무환경에서 사용하기에는 많이 부족
+
+    1. 인터페이스 지원 - QuerydslPredicateExecutor
+        - 공식 URL : https://docs.spring.io/spring-data/commons/docs/current/reference/html/#core.extensions.querydsl
+
+    [MemberRepository.java]
+    - QuerydslPredicateExecutor<Entity> 상속추가
+    ┌────────────────────────────────────────────────────────────────────────────────────────────────────┐
+        public interface MemberRepository extends JpaRepository<Member, Long>
+                , MemberRepositoryCustom
+                , QuerydslPredicateExecutor<Member> {
+
+        }
+    └────────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+    2. 사용
+        - 한계점 ( 사용안하는 것을 권장 )
+
+            . 조인 안됨 ( 묵시적 조인은 가능하지만 left join 불가 )
+            . 클라이언트가 Querydsl에 의존해야 한다. 서비스 클래스가 Querydsl 이라는 구현 기술에 의존
+              ==> Service 계층에서 Predicate 를 작성해야 함
+            . 복잡한 실무환경 적용하기 어렵다.
+        - 참고 : QuerydslPredicateExecutor는 Pageable, Sort 모두 지원하고 정상 작동.
+    ┌────────────────────────────────────────────────────────────────────────────────────────────────────┐
+        @Test
+        @DisplayName("QuerydslPredicateExecutor 테스트")
+        void querydslPredicateExecutorTest()
+        {
+            QMember member = QMember.member;
+            Iterable<Member> members = memberRepository.findAll(
+                    member.age.between(20, 40)
+                            .and(member.username.eq("member1"))
+            );
+
+            for (Member m : members) {
+                System.out.println("m = " + m);
+            }
+        }
+    └────────────────────────────────────────────────────────────────────────────────────────────────────┘
+    ┌────────────────────────────────────────────────────────────────────────────────────────────────────┐
+
+    └────────────────────────────────────────────────────────────────────────────────────────────────────┘

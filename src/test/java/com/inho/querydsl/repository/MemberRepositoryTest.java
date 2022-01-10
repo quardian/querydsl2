@@ -1,6 +1,7 @@
 package com.inho.querydsl.repository;
 
 import com.inho.querydsl.entity.Member;
+import com.inho.querydsl.entity.QMember;
 import com.inho.querydsl.entity.Team;
 import com.inho.querydsl.web.dto.MemberSearchCondition;
 import com.inho.querydsl.web.dto.MemberTeamDto;
@@ -106,6 +107,23 @@ public class MemberRepositoryTest {
         System.out.println("number = " + page.getNumber());
         for (MemberTeamDto memberTeamDto : content) {
             System.out.println("memberTeamDto = " + memberTeamDto);
+        }
+    }
+
+
+
+    @Test
+    @DisplayName("QuerydslPredicateExecutor 테스트")
+    void querydslPredicateExecutorTest()
+    {
+        QMember member = QMember.member;
+        Iterable<Member> members = memberRepository.findAll(
+                member.age.between(20, 40)
+                        .and(member.username.eq("member1"))
+        );
+
+        for (Member m : members) {
+            System.out.println("m = " + m);
         }
     }
 }
