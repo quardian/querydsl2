@@ -10,6 +10,7 @@ import com.inho.querydsl.web.dto.QMemberTeamDto;
 import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.Tuple;
 import com.querydsl.core.types.Projections;
+import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.core.types.dsl.Expressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
@@ -110,11 +111,47 @@ public class MemberJpaRepository
                 )
                 .from(member)
                 .leftJoin(member.team, team)
-                .where( teamNameEq(dto.getTeamName()),
-                        ageGoe(dto.getAgeGoe()),
-                        ageGoe(dto.getAgeGoe()),
-                        ageLoe(dto.getAgeLoe())
+                .where( whereBuilder )
+                .fetch();
+
+        return members;
+    }
+
+    public List<MemberTeamDto> searchByWhereParam(MemberSearchCondition dto)
+    {
+        List<MemberTeamDto> members = queryFactory
+                .select(
+                        new QMemberTeamDto(
+                                member.id.as("memberId"),
+                                member.username,
+                                member.age,
+                                team.id.as("teamId"),
+                                team.name.as("teamName")
                         )
+                )
+                .from(member)
+                .leftJoin(member.team, team)
+                .where()
+                .fetch();
+
+        List<MemberTeamDto> members1 = queryFactory
+                .select(
+                        Projections.constructor( MemberTeamDto.class,
+                                member.id.as("memberId"),
+                                member.username,
+                                member.age,
+                                team.id.as("teamId"),
+                                team.name.as("teamName")
+                        )
+                )
+                .from(member)
+                .leftJoin(member.team, team)
+                .where(
+                        usernameEqB( dto.getUsername() ),
+                        teamNameEqB( dto.getTeamName() ),
+                        ageGoeB( dto.getAgeGoe() ),
+                        ageLoeB( dto.getAgeLoe() )
+                )
                 .fetch();
 
         return members;
@@ -147,6 +184,24 @@ public class MemberJpaRepository
     private BooleanBuilder ageLoe(Integer ageLoe) {
         BooleanBuilder builder = new BooleanBuilder();
         return (ageLoe != null) ? builder.and(member.age.loe(ageLoe)) : builder;
+    }
+
+
+    private BooleanExpression usernameEqB(String username){
+        return (StringUtils.hasText(username)) ? member.username.eq(username) : null;
+    }
+
+    private BooleanExpression teamNameEqB(String teamName){
+        return (StringUtils.hasText(teamName)) ? team.name.eq(teamName) : null;
+    }
+
+    private BooleanExpression ageGoeB(Integer ageGoe){
+        return (ageGoe != null) ? member.age.goe(ageGoe) : null;
+    }
+
+    private BooleanExpression ageLoeB(Integer ageLoe){
+        return (ageLoe != null) ? member.age.loe(
+                ageLoe) : null;
     }
 
 }

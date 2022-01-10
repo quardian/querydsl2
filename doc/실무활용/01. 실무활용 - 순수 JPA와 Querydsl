@@ -9,7 +9,7 @@
 
     2. 순수 JPA 리포지토리와 Querydsl
 
-    [순수 JPA 리포지토리 & querydsl]
+    [동적쿼리 Builder 적용]
     ┌────────────────────────────────────────────────────────────────────────────────────────────────────┐
 
         @RequiredArgsConstructor
@@ -98,6 +98,96 @@
             dto.setAgeLoe(30);
 
             List<MemberTeamDto> memberTeamDtos = memberJpaRepository.searchByBuilder(dto);
+            for (MemberTeamDto memberTeamDto : memberTeamDtos) {
+                System.out.println("memberTeamDto = " + memberTeamDto);
+            }
+        }
+    └────────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+
+
+
+ [동적쿼리 Where 적용]
+    ┌────────────────────────────────────────────────────────────────────────────────────────────────────┐
+
+        @RequiredArgsConstructor
+        public class MemberJpaRepository
+        {
+            private final EntityManager em;
+            private final JPAQueryFactory queryFactory;
+
+            ...
+
+            public List<MemberTeamDto> searchByWhereParam(MemberSearchCondition dto)
+                {
+                    List<MemberTeamDto> members = queryFactory
+                            .select(
+                                    new QMemberTeamDto(
+                                            member.id.as("memberId"),
+                                            member.username,
+                                            member.age,
+                                            team.id.as("teamId"),
+                                            team.name.as("teamName")
+                                    )
+                            )
+                            .from(member)
+                            .leftJoin(member.team, team)
+                            .where()
+                            .fetch();
+
+                    List<MemberTeamDto> members1 = queryFactory
+                            .select(
+                                    Projections.constructor( MemberTeamDto.class,
+                                            member.id.as("memberId"),
+                                            member.username,
+                                            member.age,
+                                            team.id.as("teamId"),
+                                            team.name.as("teamName")
+                                    )
+                            )
+                            .from(member)
+                            .leftJoin(member.team, team)
+                            .where(
+                                    usernameEqB( dto.getUsername() ),
+                                    teamNameEqB( dto.getTeamName() ),
+                                    ageGoeB( dto.getAgeGoe() ),
+                                    ageLoeB( dto.getAgeLoe() )
+                            )
+                            .fetch();
+
+                    return members;
+                }
+
+
+                private BooleanExpression usernameEqB(String username){
+                    return (StringUtils.hasText(username)) ? member.username.eq(username) : null;
+                }
+
+                private BooleanExpression teamNameEqB(String teamName){
+                    return (StringUtils.hasText(teamName)) ? team.name.eq(teamName) : null;
+                }
+
+                private BooleanExpression ageGoeB(Integer ageGoe){
+                    return (ageGoe != null) ? member.age.goe(ageGoe) : null;
+                }
+
+                private BooleanExpression ageLoeB(Integer ageLoe){
+                    return (ageLoe != null) ? member.age.loe(
+                            ageLoe) : null;
+                }
+        }
+
+
+       @Test
+        @DisplayName("실무활용 - 순수 JPA와 Querydsl")
+        void pureJapAndQuerydslTest()
+        {
+            MemberSearchCondition dto = new MemberSearchCondition();
+            dto.setUsername("member1");
+            dto.setAgeGoe(10);
+            dto.setAgeLoe(30);
+
+            List<MemberTeamDto> memberTeamDtos = memberJpaRepository.searchByWhereParam(dto);
             for (MemberTeamDto memberTeamDto : memberTeamDtos) {
                 System.out.println("memberTeamDto = " + memberTeamDto);
             }
