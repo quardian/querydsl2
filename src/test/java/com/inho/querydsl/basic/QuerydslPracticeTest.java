@@ -3,7 +3,10 @@ package com.inho.querydsl.basic;
 import com.inho.querydsl.entity.Member;
 import com.inho.querydsl.entity.QMember;
 import com.inho.querydsl.entity.Team;
+import com.inho.querydsl.repository.MemberJpaRepository;
 import com.inho.querydsl.web.dto.MemberDto;
+import com.inho.querydsl.web.dto.MemberSearchCondition;
+import com.inho.querydsl.web.dto.MemberTeamDto;
 import com.inho.querydsl.web.dto.QMemberDto;
 import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.Tuple;
@@ -43,6 +46,9 @@ public class QuerydslPracticeTest {
     @Autowired
     JPAQueryFactory queryFactory;
 
+    @Autowired
+    MemberJpaRepository memberJpaRepository;
+
     @BeforeEach
     void beforeEach()
     {
@@ -73,7 +79,15 @@ public class QuerydslPracticeTest {
     @DisplayName("실무활용 - 순수 JPA와 Querydsl")
     void pureJapAndQuerydslTest()
     {
+        MemberSearchCondition dto = new MemberSearchCondition();
+        dto.setUsername("member1");
+        dto.setAgeGoe(10);
+        dto.setAgeLoe(30);
 
+        List<MemberTeamDto> memberTeamDtos = memberJpaRepository.searchByBuilder(dto);
+        for (MemberTeamDto memberTeamDto : memberTeamDtos) {
+            System.out.println("memberTeamDto = " + memberTeamDto);
+        }
     }
 
 }
