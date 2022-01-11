@@ -1,11 +1,8 @@
 package com.inho.querydsl.repository.support;
 
-import com.inho.querydsl.web.dto.MemberSearchCondition;
 import com.mysema.commons.lang.Assert;
-import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.types.EntityPath;
 import com.querydsl.core.types.Expression;
-import com.querydsl.core.types.dsl.Expressions;
 import com.querydsl.core.types.dsl.PathBuilder;
 import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
@@ -18,24 +15,20 @@ import org.springframework.data.jpa.repository.support.Querydsl;
 import org.springframework.data.querydsl.SimpleEntityPathResolver;
 import org.springframework.data.support.PageableExecutionUtils;
 import org.springframework.stereotype.Repository;
-import org.springframework.util.StringUtils;
 
 import javax.annotation.PostConstruct;
 import javax.persistence.EntityManager;
 import java.util.List;
 import java.util.function.Function;
 
-import static com.inho.querydsl.entity.QMember.member;
-import static com.inho.querydsl.entity.QTeam.team;
-
-@Repository
 public class Querydsl4RepositorySupport {
-    private final Class domainClass;
+
+    private Class domainClass;
     private Querydsl querydsl;
     private EntityManager entityManager;
     private JPAQueryFactory queryFactory;
 
-    public Querydsl4RepositorySupport(Class domainClass) {
+    public Querydsl4RepositorySupport(Class<?> domainClass) {
         Assert.notNull(domainClass,"Domain class must not be null!");
         this.domainClass = domainClass;
     }
@@ -75,19 +68,23 @@ public class Querydsl4RepositorySupport {
 
     protected <T> JPAQuery<T> selectFrom(EntityPath<T> from) { return getQueryFactory().selectFrom(from); }
 
-    protected <T> Page<T> applyPagination(Pageable pageable, Function<JPAQueryFactory, JPAQuery> contentQuery) {
+    @Deprecated( since = "jpaQuery::fetchCount")
+    protected <T> Page<T> applyPagination(Pageable pageable,
+                                          Function<JPAQueryFactory, JPAQuery> contentQuery) {
         JPAQuery jpaQuery = contentQuery.apply(getQueryFactory());
         List<T> content = getQuerydsl().applyPagination(pageable, jpaQuery).fetch();
         return PageableExecutionUtils.getPage( content, pageable, jpaQuery::fetchCount );
     }
 
-    protected <T> Page<T> applyPagination(Pageable pageable, Function<JPAQueryFactory, JPAQuery> contentQuery,  Function<JPAQueryFactory, JPAQuery<Long>> countQuery) {
+    protected <T> Page<T> applyPagination(Pageable pageable,
+                                          Function<JPAQueryFactory, JPAQuery> contentQuery,
+                                          Function<JPAQueryFactory, JPAQuery<Long>> countQuery) {
+
         JPAQuery jpaQuery = contentQuery.apply(getQueryFactory());
         List<T> content = getQuerydsl().applyPagination(pageable, jpaQuery).fetch();
 
         JPAQuery<Long> countResult = countQuery.apply(getQueryFactory());
         return PageableExecutionUtils.getPage( content, pageable, countResult::fetchOne );
     }
-
 
 }

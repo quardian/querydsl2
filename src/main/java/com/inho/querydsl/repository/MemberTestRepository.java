@@ -10,6 +10,7 @@ import com.querydsl.jpa.impl.JPAQuery;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.support.PageableExecutionUtils;
+import org.springframework.stereotype.Repository;
 import org.springframework.util.StringUtils;
 
 import java.util.List;
@@ -17,6 +18,7 @@ import java.util.List;
 import static com.inho.querydsl.entity.QMember.member;
 import static com.inho.querydsl.entity.QTeam.team;
 
+@Repository
 public class MemberTestRepository extends Querydsl4RepositorySupport
 {
     public MemberTestRepository() {
@@ -103,4 +105,5 @@ public class MemberTestRepository extends Querydsl4RepositorySupport
         BooleanBuilder builder = new BooleanBuilder();
         return (ageLoe != null) ? builder.and(member.age.loe(ageLoe)) : builder;
     }
+
 }
