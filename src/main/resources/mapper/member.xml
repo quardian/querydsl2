@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.inho.querydsl.repository.MemberDao">
+
+    <select id="findById" resultType="memberDto">
+        SELECT * FROM member WHERE member_id = #{member_id}
+    </select>
+
+    <select id="findAll" resultType="memberDto">
+        SELECT * FROM member
+    </select>
+
+    <insert id="insert">
+        <selectKey
+                keyProperty="member_id"
+                resultType="long"
+                order="BEFORE"
+                statementType="PREPARED">
+            SELECT NEXT VALUE FOR HIBERNATE_SEQUENCE FROM DUAL
+        </selectKey>
+        INSERT INTO member (member_id, username, age)
+        VALUES (#{member_id}, #{username}, #{age})
+    </insert>
+
+</mapper>

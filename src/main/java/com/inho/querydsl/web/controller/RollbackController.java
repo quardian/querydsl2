@@ -26,6 +26,7 @@ public class RollbackController {
 
         Member member = new Member(username, 10);
         memberRepository.save(member);
+
         throw new RuntimeException("Rollback");
     }
 
