@@ -18,6 +18,7 @@ import org.springframework.context.annotation.Primary;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 import org.springframework.jdbc.datasource.LazyConnectionDataSourceProxy;
+import org.springframework.orm.jpa.JpaTransactionManager;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 
@@ -90,7 +91,8 @@ public class DataSourceConfig {
     @Bean
     public PlatformTransactionManager transactionManager(
             @Qualifier(value = "dataSource") DataSource lazyRoutingDataSource) {
-        DataSourceTransactionManager transactionManager = new DataSourceTransactionManager();
+        //DataSourceTransactionManager transactionManager = new DataSourceTransactionManager();
+        JpaTransactionManager transactionManager = new JpaTransactionManager();
         transactionManager.setDataSource(lazyRoutingDataSource);
         return transactionManager;
     }
