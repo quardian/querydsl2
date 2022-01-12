@@ -6,13 +6,11 @@ spring:
     master:
       driver-class-name: org.h2.Driver
       jdbc-url: jdbc:h2:tcp://localhost/~/querydsl
-      read-only: false
       username: sa
       password:
     slave:
       driver-class-name: org.h2.Driver
       jdbc-url: jdbc:h2:tcp://localhost/~/querydslsXXXXXXXXXXXXXXXXXXX
-      read-only: true
       username: sa
       password:
 

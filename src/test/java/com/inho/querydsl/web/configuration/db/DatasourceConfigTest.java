@@ -15,8 +15,6 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.sql.Connection;
 
-import static org.junit.jupiter.api.Assertions.*;
-
 @SpringBootTest
 class DatasourceConfigTest {
 
@@ -33,9 +31,9 @@ class DatasourceConfigTest {
     @Transactional(readOnly = false)
     @Rollback(false)
     void writeOnlyTransactionTest() throws InvocationTargetException, IllegalAccessException, NoSuchMethodException {
-        ReplicationRoutingDataSource replicationRoutingDataSource = new ReplicationRoutingDataSource();
+        RoutingDataSource replicationRoutingDataSource = new RoutingDataSource();
 
-        Method determinCurrentLookupKey = ReplicationRoutingDataSource.class.getDeclaredMethod(Test_Method_Name);
+        Method determinCurrentLookupKey = RoutingDataSource.class.getDeclaredMethod(Test_Method_Name);
         determinCurrentLookupKey.setAccessible(true);
 
         DataSourceType dataSourceType = (DataSourceType) determinCurrentLookupKey.invoke(replicationRoutingDataSource);
@@ -51,9 +49,9 @@ class DatasourceConfigTest {
     @Transactional(readOnly = true)
     @Rollback(false)
     void readOnlyTransactionTest() throws InvocationTargetException, IllegalAccessException, NoSuchMethodException {
-        ReplicationRoutingDataSource replicationRoutingDataSource = new ReplicationRoutingDataSource();
+        RoutingDataSource replicationRoutingDataSource = new RoutingDataSource();
 
-        Method determinCurrentLookupKey = ReplicationRoutingDataSource.class.getDeclaredMethod(Test_Method_Name);
+        Method determinCurrentLookupKey = RoutingDataSource.class.getDeclaredMethod(Test_Method_Name);
         determinCurrentLookupKey.setAccessible(true);
 
         DataSourceType dataSourceType = (DataSourceType) determinCurrentLookupKey.invoke(replicationRoutingDataSource);
