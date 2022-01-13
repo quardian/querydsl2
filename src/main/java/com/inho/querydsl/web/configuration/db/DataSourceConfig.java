@@ -15,6 +15,8 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.DependsOn;
 import org.springframework.context.annotation.Primary;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 import org.springframework.jdbc.datasource.LazyConnectionDataSourceProxy;
@@ -91,10 +93,29 @@ public class DataSourceConfig {
     @Bean
     public PlatformTransactionManager transactionManager(
             @Qualifier(value = "dataSource") DataSource lazyRoutingDataSource) {
-        //DataSourceTransactionManager transactionManager = new DataSourceTransactionManager();
-        JpaTransactionManager transactionManager = new JpaTransactionManager();
+        DataSourceTransactionManager transactionManager = new DataSourceTransactionManager();
+        //JpaTransactionManager transactionManager = new JpaTransactionManager();
         transactionManager.setDataSource(lazyRoutingDataSource);
         return transactionManager;
+    }
+
+    @Bean(name = "sqlSessionFactory")
+    public SqlSessionFactory sqlSessionFactory(@Qualifier("dataSource") DataSource dataSource,
+                                               ApplicationContext applicationContext) throws Exception {
+
+        Resource[] resources = new PathMatchingResourcePatternResolver().getResources("classpath:mapper/*.xml");
+        SqlSessionFactoryBean sqlSessionFactoryBean = new SqlSessionFactoryBean();
+        sqlSessionFactoryBean.setDataSource(dataSource);
+        sqlSessionFactoryBean.setMapperLocations(resources);
+        sqlSessionFactoryBean.setTypeAliasesPackage("com.inho.querydsl.web.dto");
+
+        return sqlSessionFactoryBean.getObject();
+    }
+
+    @Bean(name = "sqlSessionTemplate")
+    public SqlSessionTemplate sqlSessionTemplate(@Qualifier("sqlSessionFactory") SqlSessionFactory sqlSessionFactory) throws Exception {
+
+        return new SqlSessionTemplate(sqlSessionFactory);
     }
 
 }

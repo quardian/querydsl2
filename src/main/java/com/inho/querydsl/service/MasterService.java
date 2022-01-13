@@ -1,7 +1,9 @@
 package com.inho.querydsl.service;
 
 import com.inho.querydsl.entity.Member;
+import com.inho.querydsl.repository.MemberDao;
 import com.inho.querydsl.repository.MemberRepository;
+import com.inho.querydsl.web.dto.MemberDto;
 import com.zaxxer.hikari.HikariDataSource;
 import com.zaxxer.hikari.HikariPoolMXBean;
 import lombok.AccessLevel;
@@ -22,22 +24,24 @@ public class MasterService {
     private final MemberRepository memberRepository;
     private final DataSource dataSource;
 
+    private final MemberDao memberDao;
+
     public void insert()
     {
-        //printConnectionStatus();
         System.out.println("========insert::start==========");
         Member member = new Member("leeinho", 48);
         memberRepository.save(member);
         System.out.println("member = " + member);
-        System.out.println("dataSource.getClass() = " + dataSource.getClass());
         System.out.println("========insert::end==========");
     }
 
-    private void printConnectionStatus() {
-        final HikariPoolMXBean hikariPoolMXBean = ((HikariDataSource) dataSource).getHikariPoolMXBean();
-        System.out.println("################################");
-        System.out.println("현재 active인 connection의 수 : " + hikariPoolMXBean.getActiveConnections());
-        System.out.println("현재 idle인 connection의 수 : " + hikariPoolMXBean.getIdleConnections());
-        System.out.println("################################");
+
+    public void insertMybatis()
+    {
+        System.out.println("========Mybatis.insert::start==========");
+        MemberDto member = new MemberDto("leeinho", 48);
+        memberDao.insert(member);
+        System.out.println("member = " + member);
+        System.out.println("========Mybatis.insert::end==========");
     }
 }

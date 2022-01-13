@@ -25,13 +25,15 @@ public class MemberDaoTest {
     @BeforeEach
     @Transactional
     void beforeEach() throws SQLException {
-        masterService.insert();
+        //masterService.insert();
+        masterService.insertMybatis();
     }
 
     @Test
     @Transactional(readOnly = true)
     void memberDaoSelectTest() throws SQLException {
         slaveService.select();
+        slaveService.selectMybatis();
     }
 
 }
