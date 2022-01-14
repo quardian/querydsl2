@@ -1,0 +1,141 @@
+┌────────────────────────────────────────────────────────────────────────────────────────────────────┐
+	기술과 환경에 종속되는 트랜잭션 경계설정 코드
+└────────────────────────────────────────────────────────────────────────────────────────────────────┘
+    - 한 개 이상의 DB로의 작업을 하나의 트랜잭션으로 만드는 건 JDBC의 Connection을 이용한 트랜잭션 방식인
+      로컬 트랜잭션으로는 불가능하다. 왜냐하면 로컬 트랜잭션은 하나의 DB Connection에 종속되기 때문이다.
+
+    - 별도의 트랜잭션 관리자를 통해 트랜잭션을 관리하는 글로벌 트랜잭션(global transaction) 방식을 사용해야 한다.
+    - 글로벌 트랜잭션을 적용해야 트랜잭션 매니저를 통해 여러 개의 DB가 참여하는 작업을 하나의 트랜잭션으로 만들 수 있다.
+
+    - JAVA는 JDBC 외에 이런 글로벌 트랜잭션을 지원하는 트랜잭션 매니저를 지원하기 위한 API인
+      JTA(Java Transaction API)를 제공한다.
+
+    - JTA를 이용해 여러 개의 DB 또는 메시징 서버에 대한 트랜잭션 관리를 할 수 있다.
+    - 단, 트랜잭션은 JDBC나 JMS API를 사용해서 직접 제어하지 않고 JTA를 통해 트랜잭션 매니저가 관리하도록 위힘한다.
+      트랜잭션 매니저는 DB와 메시징 서버를 제어하고 관리하는 각각의 리소스 매니저와 XA 프로토콜을 통해 연결된다.
+    - 하나 이상의 DB가 참여하는 트랜잭션을 만들려면 JTA를 사용해야 한다는 사실을 기억하자!!
+
+    - JTA를 이용한 트랜잭션 코드 구조
+	┌────────────────────────────────────────────────────────────────────────────────────────────────────┐
+	    // [01] JNDI를 이용해서 서버의 UserTransaction 오브젝트를 가져온다.
+        InitialContext ctx = new InitialContext();
+        UserTransaction tx = (UserTransaction) ctx.lookup(USER_TX_JNDI_NAME);
+
+        tx.begin()
+        Connection c = dataSource.getConnection();  // JNDI로 가져온 dataSource를 사용해야 한다.
+        try {
+            // 데이터 엑세스 코드
+            tx.commit();
+        }catch(Exception e){
+            tx.rollback();
+            throw e;
+        }
+        finally{
+            c.close();
+        }
+	└────────────────────────────────────────────────────────────────────────────────────────────────────┘
+    [문제점]
+        - 하이버네이트를 이용한 트랜잭션 관리 코드는 JDBC나 JTA의 코드와 또 다르다는 것이다.
+        - 하이버네이트는 Connection을 직접 사용하지 않고 Session 이라는 것을 사용하고, 독자적인 트랜잭션 관리 API를 사용한다.
+
+┌────────────────────────────────────────────────────────────────────────────────────────────────────┐
+	트랜잭션 API의 의존관계 문제와 해결책
+└────────────────────────────────────────────────────────────────────────────────────────────────────┘
+    - 특정 기술에 의존적인 Connection, UserTransaction, Session/Transaction API 등에 종속되지 않게 할 수 있는 방법은 있다.
+    - 다행히 트랜잭션의 경계설정을 담당하는 코드는 일정한 패턴을 갖는 유사한 구조다.
+    - JDBC, JTA, Hibernate, JPA, JDO, 심시저 JMS도 트랜잭션 개념을 갖고 있으니 모두 그 트랜잭션 경계설정 방법에서 공통점이 있을 것이다.
+    - 이런 공통의 특징을 모아서 추상화된 트랜잭션 관리 계층을 만들 수 있다.
+
+┌────────────────────────────────────────────────────────────────────────────────────────────────────┐
+	스프링의 트랜잭션 서비스 추상화
+└────────────────────────────────────────────────────────────────────────────────────────────────────┘
+    - 스프링은 트랜잭션 기술의 공통점을 담은 트랜잭션 추상화 기술을 제공한다.
+
+
+	- 스프링이 제공하는 트랜잭션 추상화 계층구조
+								┌──────────────────────────────┐
+								│	UserService  			   │
+								└───────────────┬──────────────┘
+	┌───────────────────────────────────────────────────────────────────────────────────────────────┐
+	│											▼													│
+	│							┌──────────────────────────────┐  									│
+	│							│		<<interface>>		   │                                    │
+	│							│ 	PlatformTransactionManager │                                    │
+	│							└──────────────────────────────┘                                    │
+	│											△                                                   │
+	│											|                                                   │
+	│				┌---------------------------┴---------------------------┐                       │
+	│				|							|							|                       │
+	│	┌───────────┴─────────────┐	┌───────────┴─────────────┐	┌───────────┴─────────────┐         │
+	│	│	DataSourceTxManager   │	│	DataSourceTxManager   │ │	HibernateTxManager    │		    │
+	│	└─────────────────────────┘	└─────────────────────────┘	└─────────────────────────┘	        │
+	└───────────────────────────────────────────────────────────────────────────────────────────────┘
+					│							│							│
+					▼							▼							▼
+		┌─────────────────────────┐	┌─────────────────────────┐	┌─────────────────────────┐
+		│	JDBC/Connection	      │	│	JTA/UserTransaction   │ │  Hibernate/Transaction  │
+		└─────────────────────────┘	└─────────────────────────┘	└─────────────────────────┘
+
+    - 스프링의 트랜잭션 추상화 API를 적용한 코드 구조
+	┌────────────────────────────────────────────────────────────────────────────────────────────────────┐
+	    // [01] JDBC 트랜잭션 추상 오브젝트 생성
+        PlatformTransactionManager transactionManager = new DataSourceTransactionManager(dataSource);
+
+        // [02] 트랜잭션 시작
+        TransactionStatus status = transactionManager.getTransaction( new DefaultTransactionDefinition() );
+
+        try {
+            // 데이터 엑세스 코드
+            transactionManager.commit(status);      // 커밋
+        }catch(Exception e){
+            transactionManager.rollback(status);    // 롤백
+            throw e;
+        }
+	└────────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+    - 스프링이 제공하는 트랜잭션 경계설정을 위한 추상 인터페이스는 PlatformTransactionManager 다.
+      1) JDBC의 로컬 트랜잭션을 이용한다면 PlatformTransactionManager를 구현한 DataSourceTransactionManager를 사용하면 된다.
+      2) 트랜잭션을 가져오는 요청인 getTransaction() 메소드를 호출한다.
+      3) 파라미터로 넘기는 DefaultTransactionDefinition 오브젝트는 트랜잭션에 대한 속성을 담고 있다.
+      4) 이렇게 시작된 트랜잭션은 TransactionStatus 타입의 변수에 저장된다.
+      5) 트랜잭션이 시작 되었으니, 이제 DAO를 이용하는 작업 진행
+         . 스프링의 트랜잭션 추상화 기술은 트랜잭션 동기화를 사용한다.
+         . PlatformTransactionManager를 구현한 DataSourceTransactionManager 오브젝트는 JdbcTemplate에서 사용될 수 있는 방식으로
+           트랜잭션을 관리해준다. 따라서 PlatformTransactionManager를 통해 시작한 트랜잭션은 Dao의 JdbcTemplate 안에서 사용됨.
+      6) 모든 작업 수행 후, PlatformTransactionManager의 commit() 메소드에 TransactionStatus 오브젝트를 파라미터로 해서 호출하면 된다.
+         예외 발생시 rollback() 메소드 호출.
+
+┌────────────────────────────────────────────────────────────────────────────────────────────────────┐
+	트랜잭션 기술 설정의 분리
+└────────────────────────────────────────────────────────────────────────────────────────────────────┘
+    - JTA를 이용한 글로벌 트랜잭션으로 변경하려면 어떻게 해야 할까? 방법은 간단하다.
+    - PlatformTransationManager를 구현한 클래스를 JTATransactionManager로 바꿔주기만 하면 된다.
+      JTATransactionManager는 주요 자바 서버에서 제공하는 JTA 정보를 JNDI를 통해 자동으로 인식하는 기능을 갖고 있다.
+    - 별다른 설정없이 PlatformTransationManager 구현체만 변경하면 바로 적용된다.
+        . JTA : PlatformTransactionManager transactionManager = new JTATransactionManager();
+        . JPA : PlatformTransactionManager transactionManager = new JPATransactionManager();
+
+    - 트랜잭션 매니저를 빈으로 분리시킨 후 주입받는 UserService
+	┌────────────────────────────────────────────────────────────────────────────────────────────────────┐
+	    pulibc class UserService
+	    {
+	        // DI주입 (구체적인 구현체는 숨김)
+	        @Autowired
+	        private PlatformTransactionManager transactionManager;
+
+	        public void upgradeLevels()
+	        {
+                // [02] 트랜잭션 시작
+                TransactionStatus status = transactionManager.getTransaction( new DefaultTransactionDefinition() );
+
+                try {
+                    // 데이터 엑세스 코드
+                    transactionManager.commit(status);      // 커밋
+                }catch(Exception e){
+                    transactionManager.rollback(status);    // 롤백
+                    throw e;
+                }
+	        }
+
+        }
+	└────────────────────────────────────────────────────────────────────────────────────────────────────┘

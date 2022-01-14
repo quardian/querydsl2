@@ -1,0 +1,51 @@
+┌────────────────────────────────────────────────────────────────────────────────────────────────────┐
+	트랜잭션 동기화
+└────────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+    1. Jdbc Template - 트랜잭션 동기화 방법을 적용
+        [UserSerivce]
+	┌────────────────────────────────────────────────────────────────────────────────────────────────────┐
+       private DataSource dataSource;
+
+       public void setDataSource(DataSource dataSource) {
+            this.dataSource = dataSource;
+       }
+
+       public void upgradeLevels() throws Exception {
+
+            // [01] 트랜잭션 동기화 관리자를 이용해서 동기화 작업을 초기화
+            TransactionSynchronizationManager.initSynchronization();
+
+            // [02] DB커넥션을 생성하고 트랜잭션을 시작한다. 이후의 DAO 작업은 모두 여기서 시작한 트랙잰션 안에서 진행
+            Connection c = DataSourceUtils.getConnnection(dataSource);
+            c.setAutoCommit(false);
+
+            try{
+                List<User> users = userDao.getAll();
+                for ( User user : users ){
+                    if ( canUpgradeLeven(user) ){
+                        upgradeLevel(user);
+                    }
+                }
+
+                // 정상 종료시 커밋
+                c.commit();
+            }catch(Exception e){
+                // 예외 발생시 롤백
+                c.rollback();
+
+                throw e;
+            } finally {
+                // [03] 스프링 유틸리티 메소드를 이용해서 DB 커넥션을 안전하게 닫는다
+                DataSourceUtils.releaseConnection( c, dataSource);
+
+                // [04] 동기화 작업 종료 및 정리
+                TransactionSynchronizationManager.unbindResource(this.dataSource);
+                TransactionSynchronizationManager.clearSynchronization();
+            }
+
+       }
+
+	└────────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+
