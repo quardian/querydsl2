@@ -37,6 +37,7 @@ public class DataSourceConfig {
     public static final String MASTER_DATASOURCE = "masterDataSource";
     public static final String SLAVE_DATASOURCE = "slaveDataSource";
     public static final String ROUTING_DATASOURCE = "routingDataSource";
+    public static final String DATASOURCE = "dataSource";
 
     @Bean(name = MASTER_DATASOURCE)
     @ConfigurationProperties(prefix = "spring.datasource.master")
@@ -82,7 +83,7 @@ public class DataSourceConfig {
      * 따라서 Transaction 생성 시점이 아닌 실제로 쿼리가 발생하는 시점에 Datasource Connection을 가져오기 위해서 사용.
      * @return
      */
-    @Bean(name="dataSource")
+    @Bean(name=DATASOURCE)
     @Primary
     public DataSource dataSource(@Qualifier(ROUTING_DATASOURCE) DataSource routingDataSource)
     {
@@ -92,30 +93,36 @@ public class DataSourceConfig {
 
     @Bean
     public PlatformTransactionManager transactionManager(
-            @Qualifier(value = "dataSource") DataSource lazyRoutingDataSource) {
+            @Qualifier(value =DATASOURCE) DataSource lazyRoutingDataSource) {
         DataSourceTransactionManager transactionManager = new DataSourceTransactionManager();
         //JpaTransactionManager transactionManager = new JpaTransactionManager();
         transactionManager.setDataSource(lazyRoutingDataSource);
         return transactionManager;
     }
 
+    @Primary
     @Bean(name = "sqlSessionFactory")
-    public SqlSessionFactory sqlSessionFactory(@Qualifier("dataSource") DataSource dataSource,
+    public SqlSessionFactory sqlSessionFactory(@Qualifier(ROUTING_DATASOURCE) DataSource lazyConnectionDataSource,
                                                ApplicationContext applicationContext) throws Exception {
+
+        log.info("###sqlSessionFactory 생성");
+        log.info("sqlSessionFactory.datasourc={}", lazyConnectionDataSource);
 
         Resource[] resources = new PathMatchingResourcePatternResolver().getResources("classpath:mapper/*.xml");
         SqlSessionFactoryBean sqlSessionFactoryBean = new SqlSessionFactoryBean();
-        sqlSessionFactoryBean.setDataSource(dataSource);
+        sqlSessionFactoryBean.setDataSource(lazyConnectionDataSource);
         sqlSessionFactoryBean.setMapperLocations(resources);
         sqlSessionFactoryBean.setTypeAliasesPackage("com.inho.querydsl.web.dto");
 
         return sqlSessionFactoryBean.getObject();
     }
 
+    @Primary
     @Bean(name = "sqlSessionTemplate")
     public SqlSessionTemplate sqlSessionTemplate(@Qualifier("sqlSessionFactory") SqlSessionFactory sqlSessionFactory) throws Exception {
-
+        log.info("###sqlSessionTemplate 생성");
         return new SqlSessionTemplate(sqlSessionFactory);
     }
+
 
 }

@@ -14,8 +14,11 @@ import org.springframework.web.context.request.RequestContextHolder;
 public class RoutingDataSource extends AbstractRoutingDataSource {
     @Override
     protected Object determineCurrentLookupKey() {
-
         boolean isReadOnly = TransactionSynchronizationManager.isCurrentTransactionReadOnly();
+        if(isReadOnly)
+            DbContextHolder.slave();
+        else
+            DbContextHolder.master();
         DataSourceType dataSourceType = isReadOnly ? DataSourceType.Slave : DataSourceType.Master;
         log.info("[REPLACTION] AbstractRoutingDataSource.determineCurrentLookupKey : {}",dataSourceType);
         return dataSourceType;

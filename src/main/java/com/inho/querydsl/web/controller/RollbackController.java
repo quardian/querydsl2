@@ -59,6 +59,10 @@ public class RollbackController {
     public void slave()
     {
         log.info("REQUEST_URL = /slave 호출");
+        //log.info("slaveService.select()");
         slaveService.select();
+
+        log.info("slaveService.selectMybatis()");
+        slaveService.selectMybatis();
     }
 }

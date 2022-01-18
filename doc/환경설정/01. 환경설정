@@ -1,0 +1,135 @@
+┌────────────────────────────────────────────────────────────────────────────────────────────────────┐
+	환경설정
+└────────────────────────────────────────────────────────────────────────────────────────────────────┘
+    Spring Boot에서 Spring Bean 초기화 과정에 대해 알아보자.
+        https://bottom-to-top.tistory.com/44?category=807633
+        @EnableAutoConfiguration
+
+    [Spring Boot] 자동 설정 @EnableAutoConfiguration
+        https://velog.io/@max9106/Spring-Boot-EnableAutoConfiguration
+
+
+    1. 목차
+        1) @Configuration
+        2) @EnableConfigurationProperties
+        3) @ConfigurationProperties
+        4) @ConstructorBinding
+        5) @PropertySource
+
+    2. @Configuration
+        - 설정파일을 만들기 위한 어노테이션 or Bean을 등록하기 위한 어노테이션
+        - 주로 1 개 이상의 Bean을 생성하고 있음을 명시한다.
+        - 개발자가 직접 제어가 불가능한 라이브러리를 활용할 때 사용
+        - 초기에 설정을 하기 위해 활용할 때 사용
+        - @Configuration 지정 클래스 내에서 @Bean 메소드 등록 시, 싱글톤을 보장한다.
+
+    3. @EnableConfigurationProperties
+        - 지정된 class로 프로퍼티 오브젝트를 생성하겠다는 선언.
+        - @EnableConfigurationProperties 어노테이션을 사용하여 사용할 프로퍼티 클래스 값으로 줘서 사용해야한다.
+	┌────────────────────────────────────────────────────────────────────────────────────────────────────┐
+        @SpringBootApplication
+        @EnableConfigurationProperties(MyProperties.class)
+        public class SpringInitApplication{
+            public static void main(String[] args){
+                ...
+            }
+        }
+	└────────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+    4. @ConfigurationProperties
+
+        - properties 파일의 key 값이 아래와 같이 같은 값으로 시작할 때, 그것을 묶어서 Bean으로 등록
+        - @ConfigurationProperties 어노테이션을 붙여주면, 메타데이터를 생성해 자동완성 기능을 가능하게 해주는
+          의존성을 추가하라고 뜬느데, 의존성은 아래와 같다.
+
+        [application.properties]
+            ┌─────────────────────────────────────────────────────────────────────────────────────────────┐
+                my.name = leeinho
+                my.age = ${random.init}
+                my.fullName = ${my.name} Kim
+            └─────────────────────────────────────────────────────────────────────────────────────────────┘
+
+        [MyProperties.java]
+            ┌─────────────────────────────────────────────────────────────────────────────────────────────┐
+                @Getter @Setter
+                @ConfigurationProperties("my")
+                public class MyProperties{
+                    private String name;
+                    private int age;
+                    private String fullName;
+                }
+            └─────────────────────────────────────────────────────────────────────────────────────────────┘
+
+        - 프로퍼티 클래스의 사용
+        [AppRunner.java]
+            ┌─────────────────────────────────────────────────────────────────────────────────────────────┐
+                public class AppRunner implements ApplicationRunner {
+                    @Autowired
+                    MyProperties myProperties;
+
+                    @Override
+                    public void run(ApplicationArguments args) throws Exception {
+                        System.out.println( myProperties.getName() );
+                        System.out.println( myProperties.getAge() );
+                        System.out.println( myProperties.getFullName() );
+                    }
+                }
+            └─────────────────────────────────────────────────────────────────────────────────────────────┘
+
+
+        - third-party configuration
+            . properties가 애플리케이션 안에 있지 않고, jar 파일에 있거나 다른 곳에 있는 경우에는
+              클래스 위에 @Component를 붙여 Bean으로 만들어 줄 수가 없다.
+            . 이런 경우는 @Bean 어노테이션에다가 @ConfigurationProperties("prefix값") 어노테이션을 사용할 수 있다.
+
+    5. @ConstructorBinding
+        - 불변성을 지키기 위해 Spring Boot 2.3 버전 이후 생성자 주입방식으로 Properties 파일을 만들 수 있게 되었다.
+        - @ConstructorBinding 어노테이션을 이용하면 final 필드에 대해 값을 주입해준다.
+          중첩 클래스가 있다면 자동으로 중첩 클래스의 final 필드 또한 값을 주입하는 대상이 된다.
+        - final 키워드를 명시하지 않는다면 setter를 이용해서 값을 binding 하려하기 때문에 setter가 없다는 exception이 발생
+            ┌─────────────────────────────────────────────────────────────────────────────────────────────┐
+
+                external:
+                  record-year: 2020
+                  api:
+                    name: kakao
+                    key: 123123
+
+                @Getter
+                @RequiredArgsConstructor
+                @ConstructorBinding
+                @ConfigurationProperties("external")
+                public final class ConstructorProperties {
+                    private final String recordYear;
+                    private final Api api;
+
+                    @Getter
+                    @RequiredArgsConstructor
+                    public static final class Api {
+                        private final String name;
+                        private final Integer key;
+                    }
+                }
+            └─────────────────────────────────────────────────────────────────────────────────────────────┘
+
+
+
+    6. @PropertySource
+        - PropertySource를 Spring에 추가하기 위해서는 Environment인 @Configuration 클래스와 함께 사용된다.
+        - properties 파일을 호출하기 위해 선언
+        - 아래 예제는 @PropertySoruce 어노테이션에 app.properties 경로를 넣어주면, Environment 객체에 프로퍼티 값이 자동으로 주입된다.
+            ┌─────────────────────────────────────────────────────────────────────────────────────────────┐
+              @Configuration
+              @PropertySource("classpath:/com/web/app.properties")
+              public class AppConfig {
+                    @Autowired Environment env;
+
+                    @Bean
+                    public TestBean testBean(){
+                        TestBean testBean = new TestBean();
+                        testBean.setName( env.getProperty("testbean.name") );
+                        return testBean;
+                    }
+              }
+              //
+            └─────────────────────────────────────────────────────────────────────────────────────────────┘
